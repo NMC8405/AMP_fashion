@@ -1,0 +1,102 @@
+@model List<SanPham>
+@{
+    ViewData["Title"] = "Ưu đãi & Khuyến mãi";
+    var vouchers = ViewBag.Vouchers as List<MaGiamGia> ?? new List<MaGiamGia>();
+}
+
+<!-- Flash Sale Hero Banner -->
+<section class="amp-hero" style="min-height:360px;background-image:linear-gradient(rgba(0,0,0,0.55),rgba(0,0,0,0.65)),url('https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=1600&auto=format&fit=crop');background-size:cover;background-position:center;display:flex;align-items:center;color:#fff;margin-bottom:50px">
+    <div class="amp-container text-center" style="padding:60px 24px">
+        <span style="display:inline-block;padding:6px 16px;background:rgba(255,255,255,0.2);backdrop-filter:blur(4px);border:1px solid rgba(255,255,255,0.4);font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:18px">Ưu Đãi Đặc Biệt</span>
+        <h1 style="font-size:38px;letter-spacing:3px;font-weight:800;text-transform:uppercase;margin-bottom:12px">FLASH SALE & MÃ GIẢM GIÁ</h1>
+        <p style="font-size:15px;color:#ddd;max-width:600px;margin:0 auto 24px">Săn ngay các voucher giá trị và ưu đãi lên đến 50% cho các thiết kế tối giản, thanh lịch của AMP.</p>
+        <a href="#danh-sach-voucher" class="amp-btn amp-btn-white">Nhận mã ngay</a>
+    </div>
+</section>
+
+<div class="amp-container" style="padding-bottom:90px" id="danh-sach-voucher">
+    <!-- Voucher Cards Section -->
+    <div class="amp-section-title">
+        <h2>MÃ GIẢM GIÁ HÔM NAY</h2>
+        <p>Lưu hoặc sao chép mã voucher để áp dụng khi thanh toán</p>
+    </div>
+
+    @if (vouchers.Count == 0)
+    {
+        <p class="text-center text-muted my-5">Hiện chưa có mã giảm giá nào đang áp dụng.</p>
+    }
+    else
+    {
+        <div class="row g-4 mb-5">
+            @foreach (var v in vouchers)
+            {
+                <div class="col-md-4 col-sm-6">
+                    <div class="amp-voucher-card" style="border:1px dashed var(--amp-border);background:var(--amp-surface);padding:24px;border-radius:4px;display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.03);transition:transform .2s">
+                        <div style="border-bottom:1px solid var(--amp-border);padding-bottom:14px;margin-bottom:14px">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span style="font-weight:800;font-size:18px;letter-spacing:1px;color:var(--amp-text)">@v.Ma</span>
+                                <span class="badge bg-dark" style="font-size:11px;padding:5px 9px">
+                                    @(v.LoaiGiamGia == LoaiGiamGia.PhanTram ? $"GIẢM {v.GiaTri:0}%" : $"GIẢM {v.GiaTri:N0}₫")
+                                </span>
+                            </div>
+                            <p style="font-size:13px;color:var(--amp-muted);margin:0">
+                                @(string.IsNullOrEmpty(v.MoTa) ? $"Áp dụng cho đơn hàng từ {v.GiaTriDonHangToiThieu:N0}₫" : v.MoTa)
+                            </p>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span style="font-size:11.5px;color:var(--amp-muted)">
+                                HSD: @v.NgayKetThuc.ToString("dd/MM/yyyy")
+                            </span>
+                            <button type="button" class="amp-btn amp-btn-sm amp-btn-outline btn-copy-code" data-code="@v.Ma" style="font-size:12px;padding:6px 14px">
+                                <i class="bi bi-clipboard me-1"></i> Sao chép
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    <!-- Sale Products Section -->
+    <div class="amp-section-title mt-5">
+        <h2>SẢN PHẨM ĐANG GIẢM GIÁ</h2>
+        <p>Những thiết kế thời trang được áp dụng mức giá ưu đãi tốt nhất</p>
+    </div>
+
+    @if (Model.Count == 0)
+    {
+        <p class="text-center text-muted my-5">Hiện không có sản phẩm nào đang giảm giá.</p>
+    }
+    else
+    {
+        <div class="row g-4">
+            @foreach (var sp in Model)
+            {
+                <div class="col-lg-3 col-md-4 col-6">
+                    <partial name="_ProductCard" model="sp" />
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('.btn-copy-code').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const code = this.getAttribute('data-code');
+                navigator.clipboard.writeText(code).then(() => {
+                    const originalText = this.innerHTML;
+                    this.innerHTML = '<i class="bi bi-check2 me-1"></i> Đã chép!';
+                    this.classList.remove('amp-btn-outline');
+                    this.classList.add('amp-btn-primary');
+                    setTimeout(() => {
+                        this.innerHTML = originalText;
+                        this.classList.remove('amp-btn-primary');
+                        this.classList.add('amp-btn-outline');
+                    }, 2000);
+                });
+            });
+        });
+    </script>
+}

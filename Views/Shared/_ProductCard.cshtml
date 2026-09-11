@@ -1,0 +1,56 @@
+@model AMPFashionStore.Models.SanPham
+@{
+    var yeuThichIds = ViewBag.YeuThichIds as HashSet<int> ?? new HashSet<int>();
+    var daYeuThich = yeuThichIds.Contains(Model.Id);
+    var conHang = Model.BienThes != null && Model.BienThes.Count > 0 ? Model.TongSoLuongTon > 0 : true;
+}
+<div class="amp-product-card">
+    <div class="amp-product-thumb">
+        <a asp-controller="SanPham" asp-action="ChiTiet" asp-route-id="@Model.Id">
+            <img src="@Model.HinhAnhChinh" alt="@Model.TenSanPham" loading="lazy" />
+        </a>
+        @if (Model.DangGiamGia)
+        {
+            var pct = Model.GiaGoc > 0 ? (int)Math.Round((1 - (Model.GiaKhuyenMai!.Value / Model.GiaGoc)) * 100) : 0;
+            <span class="amp-product-badge sale">-@pct%</span>
+        }
+        @if (User.Identity?.IsAuthenticated == true)
+        {
+            <form asp-controller="YeuThich" asp-action="@(daYeuThich ? "Xoa" : "Them")" method="post">
+                <input type="hidden" name="sanPhamId" value="@Model.Id" />
+                <input type="hidden" name="veTrang" value="danh-sach" />
+                <button type="submit" class="amp-wish-btn @(daYeuThich ? "active" : "")" title="Yêu thích">
+                    <i class="bi @(daYeuThich ? "bi-heart-fill" : "bi-heart")"></i>
+                </button>
+            </form>
+        }
+        else
+        {
+            <a class="amp-wish-btn" asp-controller="TaiKhoan" asp-action="DangNhap" title="Đăng nhập để lưu"><i class="bi bi-heart"></i></a>
+        }
+        @if (!conHang)
+        {
+            <div class="amp-out-of-stock">Hết hàng</div>
+        }
+    </div>
+    @if (!string.IsNullOrEmpty(Model.ThuongHieu))
+    {
+        <span class="amp-product-brand">@Model.ThuongHieu</span>
+    }
+    <a asp-controller="SanPham" asp-action="ChiTiet" asp-route-id="@Model.Id" class="amp-product-name">@Model.TenSanPham</a>
+    <div class="amp-price-row">
+        <span class="amp-price @(Model.DangGiamGia ? "sale" : "")">@Model.GiaHienThi.ToString("N0")₫</span>
+        @if (Model.DangGiamGia)
+        {
+            <span class="amp-price-old">@Model.GiaGoc.ToString("N0")₫</span>
+        }
+    </div>
+    <div class="amp-rating">
+        @{ var diem = Model.DiemDanhGiaTrungBinh; }
+        @for (var i = 1; i <= 5; i++)
+        {
+            <i class="bi @(i <= Math.Round(diem) ? "bi-star-fill" : "bi-star")"></i>
+        }
+        <span class="cnt">(@(Model.DanhGias?.Count ?? 0))</span>
+    </div>
+</div>

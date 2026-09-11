@@ -1,0 +1,34 @@
+@model DatLaiMatKhauViewModel
+@{
+    ViewData["Title"] = "Đặt lại mật khẩu";
+}
+<div class="amp-auth-wrap">
+    <div class="amp-auth-card">
+        <h1>Đặt lại mật khẩu</h1>
+        <p class="amp-sub">Tạo mật khẩu mới cho tài khoản của bạn</p>
+
+        <div asp-validation-summary="ModelOnly" class="validation-summary-errors"></div>
+
+        <form asp-action="DatLaiMatKhau" method="post">
+            <div class="amp-field">
+                <label asp-for="MatKhauMoi" class="amp-label"></label>
+                <input asp-for="MatKhauMoi" class="form-control" placeholder="Nhập mật khẩu mới" data-pwd-strength autofocus />
+                <div class="amp-strength" data-strength-bar><span></span></div>
+                <div class="amp-strength-hint" data-strength-hint></div>
+                <span asp-validation-for="MatKhauMoi" class="text-danger"></span>
+            </div>
+            <div class="amp-field">
+                <label asp-for="XacNhanMatKhauMoi" class="amp-label"></label>
+                <input asp-for="XacNhanMatKhauMoi" class="form-control" placeholder="Nhập lại mật khẩu mới" />
+                <span asp-validation-for="XacNhanMatKhauMoi" class="text-danger"></span>
+            </div>
+            <button type="submit" class="amp-btn amp-btn-primary amp-btn-block">Đặt lại mật khẩu</button>
+        </form>
+
+        <p class="amp-auth-foot"><a asp-action="DangNhap" class="amp-link">Quay lại đăng nhập</a></p>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

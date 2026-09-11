@@ -1,0 +1,75 @@
+@model List<NguoiDung>
+@{
+    ViewData["Title"] = "Quản lý tài khoản";
+}
+<div class="amp-table-toolbar">
+    <form method="get" class="d-flex gap-2">
+        <input type="text" name="tuKhoa" value="@ViewBag.TuKhoa" class="form-control" placeholder="Tìm theo tên hoặc email..." style="width:260px" />
+        <select name="vaiTro" class="form-select" style="width:180px" onchange="this.form.submit()">
+            <option value="">Tất cả vai trò</option>
+            <option value="KhachHang" selected="@(ViewBag.VaiTro?.ToString() == "KhachHang")">Khách hàng</option>
+            <option value="NhanVien" selected="@(ViewBag.VaiTro?.ToString() == "NhanVien")">Nhân viên</option>
+            <option value="QuanTriVien" selected="@(ViewBag.VaiTro?.ToString() == "QuanTriVien")">Quản trị viên</option>
+        </select>
+        <button type="submit" class="amp-btn amp-btn-outline">Lọc</button>
+    </form>
+    <a asp-action="Them" class="amp-btn amp-btn-primary"><i class="bi bi-plus-lg me-1"></i>Thêm tài khoản</a>
+</div>
+
+<div class="amp-table-card">
+    <table class="amp-table">
+        <thead><tr><th>Họ tên</th><th>Email</th><th>SĐT</th><th>Vai trò</th><th>Trạng thái</th><th>Ngày tạo</th><th></th></tr></thead>
+        <tbody>
+            @if (Model.Count == 0)
+            {
+                <tr><td colspan="7" class="text-center text-muted py-4">Không tìm thấy tài khoản nào.</td></tr>
+            }
+            @foreach (var u in Model)
+            {
+                <tr>
+                    <td>@u.HoTen</td>
+                    <td style="font-size:12.5px">@u.Email</td>
+                    <td>@u.SoDienThoai</td>
+                    <td>@u.TenVaiTro</td>
+                    <td>
+                        @if (u.TrangThai == TrangThaiTaiKhoan.HoatDong)
+                        {
+                            <span class="amp-status amp-status-da-giao">Hoạt động</span>
+                        }
+                        else
+                        {
+                            <span class="amp-status amp-status-da-huy">Bị khóa</span>
+                        }
+                    </td>
+                    <td style="font-size:12.5px">@u.NgayTao.ToString("dd/MM/yyyy")</td>
+                    <td>
+                        <div class="d-flex gap-1 flex-wrap">
+                            <a asp-action="Sua" asp-route-id="@u.Id" class="amp-btn amp-btn-outline amp-btn-sm">Sửa</a>
+                            @if (u.VaiTro != VaiTro.QuanTriVien)
+                            {
+                                @if (u.TrangThai == TrangThaiTaiKhoan.HoatDong)
+                                {
+                                    <form asp-action="Khoa" method="post" onsubmit="return confirm('Khóa tài khoản này?')">
+                                        <input type="hidden" name="id" value="@u.Id" />
+                                        <button type="submit" class="amp-btn amp-btn-outline amp-btn-sm">Khóa</button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <form asp-action="MoKhoa" method="post">
+                                        <input type="hidden" name="id" value="@u.Id" />
+                                        <button type="submit" class="amp-btn amp-btn-outline amp-btn-sm">Mở khóa</button>
+                                    </form>
+                                }
+                                <form asp-action="Xoa" method="post" onsubmit="return confirm('Xóa tài khoản này? Hành động này không thể hoàn tác.')">
+                                    <input type="hidden" name="id" value="@u.Id" />
+                                    <button type="submit" class="amp-btn amp-btn-danger amp-btn-sm">Xóa</button>
+                                </form>
+                            }
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

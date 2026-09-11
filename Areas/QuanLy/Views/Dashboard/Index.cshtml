@@ -1,0 +1,121 @@
+@model ThongKeViewModel
+@{
+    ViewData["Title"] = "Thống kê tổng quan";
+    var nhanNgay = Model.DoanhThuTheoNgay.Select(d => d.Ngay.ToString("dd/MM")).ToList();
+    var giaTriDoanhThu = Model.DoanhThuTheoNgay.Select(d => d.DoanhThu).ToList();
+}
+<div class="amp-table-toolbar">
+    <form method="get" class="d-flex gap-2 align-items-end flex-wrap">
+        <div>
+            <label class="amp-label">Từ ngày</label>
+            <input type="date" name="tuNgay" value="@Model.TuNgay.ToString("yyyy-MM-dd")" class="form-control" />
+        </div>
+        <div>
+            <label class="amp-label">Đến ngày</label>
+            <input type="date" name="denNgay" value="@Model.DenNgay.ToString("yyyy-MM-dd")" class="form-control" />
+        </div>
+        <button type="submit" class="amp-btn amp-btn-outline">Lọc</button>
+    </form>
+    <a href="@Url.Action("XuatFile", new { tuNgay = Model.TuNgay.ToString("yyyy-MM-dd"), denNgay = Model.DenNgay.ToString("yyyy-MM-dd") })" class="amp-btn amp-btn-primary">
+        <i class="bi bi-download me-1"></i> Xuất file thống kê
+    </a>
+</div>
+
+<div class="amp-kpi-grid">
+    <div class="amp-kpi-card">
+        <div class="lbl">Đơn hàng mới</div>
+        <div class="val">@Model.TongDonHangMoi</div>
+    </div>
+    <div class="amp-kpi-card">
+        <div class="lbl">Doanh thu</div>
+        <div class="val">@Model.TongDoanhThu.ToString("N0")₫</div>
+    </div>
+    <div class="amp-kpi-card">
+        <div class="lbl">Khách hàng mới</div>
+        <div class="val">@Model.TongKhachHangMoi</div>
+    </div>
+    <div class="amp-kpi-card">
+        <div class="lbl">Sản phẩm đã bán</div>
+        <div class="val">@Model.TongSanPhamDaBan</div>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-lg-8">
+        <div class="amp-table-card" style="padding:22px">
+            <h6 class="amp-heading-sm mb-3">Doanh thu theo ngày</h6>
+            <canvas id="chartDoanhThu" height="110"></canvas>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="amp-table-card" style="padding:22px">
+            <h6 class="amp-heading-sm mb-3">Đơn hàng theo trạng thái</h6>
+            <canvas id="chartTrangThai" height="180"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="amp-table-card">
+    <div style="padding:18px 20px 0"><h6 class="amp-heading-sm mb-0">Top sản phẩm bán chạy</h6></div>
+    <table class="amp-table mt-2">
+        <thead><tr><th>Sản phẩm</th><th>Số lượng đã bán</th><th>Doanh thu</th></tr></thead>
+        <tbody>
+            @if (Model.TopSanPhamBanChay.Count == 0)
+            {
+                <tr><td colspan="3" class="text-center text-muted py-4">Chưa có dữ liệu bán hàng trong khoảng thời gian này.</td></tr>
+            }
+            @foreach (var p in Model.TopSanPhamBanChay)
+            {
+                <tr>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <img src="@p.HinhAnh" class="amp-thumb-sm" />
+                            <a asp-area="" asp-controller="SanPham" asp-action="ChiTiet" asp-route-id="@p.SanPhamId" target="_blank">@p.TenSanPham</a>
+                        </div>
+                    </td>
+                    <td>@p.SoLuongDaBan</td>
+                    <td>@p.DoanhThu.ToString("N0")₫</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@section Scripts {
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+    const ctxDoanhThu = document.getElementById('chartDoanhThu');
+    new Chart(ctxDoanhThu, {
+        type: 'line',
+        data: {
+            labels: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(nhanNgay)),
+            datasets: [{
+                label: 'Doanh thu (đ)',
+                data: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(giaTriDoanhThu)),
+                borderColor: '#1a1a1a',
+                backgroundColor: 'rgba(26,26,26,0.06)',
+                tension: 0.3,
+                fill: true,
+                pointRadius: 3
+            }]
+        },
+        options: {
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true, ticks: { callback: v => v.toLocaleString('vi-VN') } } }
+        }
+    });
+
+    const ctxTrangThai = document.getElementById('chartTrangThai');
+    new Chart(ctxTrangThai, {
+        type: 'doughnut',
+        data: {
+            labels: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.DonHangTheoTrangThai.Keys)),
+            datasets: [{
+                data: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.DonHangTheoTrangThai.Values)),
+                backgroundColor: ['#a8384a', '#dd9d2b', '#2f5f7d', '#4a3fa8', '#2f7d4f', '#a3a29c']
+            }]
+        },
+        options: { plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } } }
+    });
+</script>
+}

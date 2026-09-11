@@ -1,0 +1,110 @@
+@{
+    ViewData["Title"] = "Trang chủ";
+    var danhMucNoiBat = ViewBag.DanhMucNoiBat as List<DanhMuc> ?? new();
+    var sanPhamNoiBat = ViewBag.SanPhamNoiBat as List<SanPham> ?? new();
+    var sanPhamMoi = ViewBag.SanPhamMoi as List<SanPham> ?? new();
+    var sanPhamGiamGia = ViewBag.SanPhamGiamGia as List<SanPham> ?? new();
+    var anhDanhMuc = new[] { 
+        "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?q=80&w=800&auto=format&fit=crop", // Áo Nam
+        "https://images.unsplash.com/photo-1584273143981-41c073dfe8f8?q=80&w=800&auto=format&fit=crop", // Áo Nữ
+        "https://images.unsplash.com/photo-1542272604-780c96856592?q=80&w=800&auto=format&fit=crop"  // Quần
+    };
+}
+
+<section class="amp-hero" style="background-image:linear-gradient(rgba(0,0,0,0.35),rgba(0,0,0,0.45)), url('https://images.unsplash.com/photo-1469334031218-e382a71b716b?q=80&w=1600&auto=format&fit=crop'); background-size:cover; background-position:center;">
+    <div class="amp-hero-content">
+        <span class="amp-eyebrow" style="letter-spacing:2px;font-weight:700">Bộ sưu tập mới</span>
+        <h1>Chất liệu của sự thanh lịch</h1>
+        <p style="margin-bottom:24px;color:#eee">Tối giản trong từng đường cắt, bền vững trong từng chất liệu — AMP đồng hành cùng phong cách của bạn.</p>
+        <a asp-controller="SanPham" asp-action="DanhSach" class="amp-btn amp-btn-white" style="font-weight:600">Khám phá ngay</a>
+    </div>
+</section>
+
+<div class="amp-container">
+
+    @if (danhMucNoiBat.Count > 0)
+    {
+        <div class="amp-section-title">
+            <h2>Danh mục nổi bật</h2>
+            <p>Chọn phong cách bạn đang tìm kiếm</p>
+        </div>
+        <div class="row g-3 mb-5">
+            @for (int i = 0; i < danhMucNoiBat.Count; i++)
+            {
+                <div class="col-md-4">
+                    <div class="amp-category-card" style="background-image:linear-gradient(rgba(0,0,0,0.1),rgba(0,0,0,0.65)), url('@(anhDanhMuc[i % anhDanhMuc.Length])'); background-size:cover; background-position:center;">
+                        <div class="cc-body">
+                            <h3>@danhMucNoiBat[i].TenDanhMuc</h3>
+                            <a asp-controller="SanPham" asp-action="DanhSach" asp-route-danhMucId="@danhMucNoiBat[i].Id">Xem bộ sưu tập →</a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    @if (sanPhamNoiBat.Count > 0)
+    {
+        <div class="amp-section-title">
+            <h2>Sản phẩm nổi bật</h2>
+            <p>Được yêu thích nhất tại AMP</p>
+        </div>
+        <div class="amp-product-grid mb-5">
+            @foreach (var sp in sanPhamNoiBat.Take(8))
+            {
+                <partial name="_ProductCard" model="sp" />
+            }
+        </div>
+    }
+</div>
+
+<div class="amp-container">
+    <div class="amp-promo-banner" style="background-image:linear-gradient(rgba(20,20,18,.55),rgba(20,20,18,.55)), url('https://images.unsplash.com/photo-1445205170230-053b83016050?q=80&w=1400&auto=format&fit=crop'); background-size:cover; background-position:center;">
+        <div>
+            <span class="amp-eyebrow" style="color:#eee">Ưu đãi có hạn</span>
+            <h2>Giảm đến 30% — Bộ sưu tập mới</h2>
+        </div>
+        <a asp-controller="SanPham" asp-action="DanhSach" asp-route-chiGiamGia="true" class="amp-btn amp-btn-primary">Mua ngay</a>
+    </div>
+</div>
+
+<div class="amp-container">
+    @if (sanPhamMoi.Count > 0)
+    {
+        <div class="amp-section-title">
+            <h2>Sản phẩm mới</h2>
+            <p>Vừa mới cập bến tại AMP</p>
+        </div>
+        <div class="amp-product-grid mb-5">
+            @foreach (var sp in sanPhamMoi)
+            {
+                <partial name="_ProductCard" model="sp" />
+            }
+        </div>
+    }
+
+    @if (sanPhamGiamGia.Count > 0)
+    {
+        <div class="amp-section-title">
+            <h2>Đang giảm giá</h2>
+            <p>Nhanh tay trước khi hết ưu đãi</p>
+        </div>
+        <div class="amp-product-grid mb-5">
+            @foreach (var sp in sanPhamGiamGia)
+            {
+                <partial name="_ProductCard" model="sp" />
+            }
+        </div>
+    }
+</div>
+
+<div class="amp-container">
+    <div class="amp-surface-card text-center mb-5" style="max-width:640px;margin:0 auto 90px;padding:48px;">
+        <h2 class="amp-heading-md mb-2">Đăng ký nhận tin ưu đãi</h2>
+        <p style="color:var(--amp-muted);font-size:13.5px;margin-bottom:22px">Nhận thông tin bộ sưu tập mới và ưu đãi độc quyền sớm nhất từ AMP.</p>
+        <form class="d-flex gap-2" style="max-width:420px;margin:0 auto" onsubmit="return false;">
+            <input type="email" class="form-control" placeholder="Nhập email của bạn" required />
+            <button type="submit" class="amp-btn amp-btn-primary" style="flex-shrink:0">Đăng ký</button>
+        </form>
+    </div>
+</div>

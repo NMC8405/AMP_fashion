@@ -1,0 +1,45 @@
+@model DonHang
+@{
+    ViewData["Title"] = "Đặt hàng thành công";
+    string? qrUrl = ViewBag.QrUrl;
+    var bank = ViewBag.BankSettings as AMPFashionStore.Services.BankSettings;
+}
+<div class="amp-auth-wrap" style="align-items:flex-start;padding-top:50px">
+    <div class="amp-auth-card wide text-center">
+        <div style="font-size:52px;color:var(--amp-success);margin-bottom:10px"><i class="bi bi-check-circle"></i></div>
+        <h1 style="font-size:22px">Đặt hàng thành công!</h1>
+        <p class="amp-sub">Cảm ơn bạn đã mua sắm tại AMP. Chúng tôi đã ghi nhận đơn hàng của bạn.</p>
+
+        <div class="amp-surface-card text-start mb-4">
+            <h2 class="amp-heading-sm mb-3">Thông tin đơn hàng</h2>
+            <div class="amp-summary-row"><span>Mã đơn hàng</span><strong>@Model.MaDonHang</strong></div>
+            <div class="amp-summary-row"><span>Ngày đặt</span><span>@Model.NgayDat.ToString("HH:mm dd/MM/yyyy")</span></div>
+            <div class="amp-summary-row"><span>Trạng thái</span><span class="amp-status amp-status-@Model.CssTrangThai">@Model.TenTrangThai</span></div>
+            <div class="amp-summary-row"><span>Người nhận</span><span>@Model.TenNguoiNhan — @Model.SoDienThoaiNhan</span></div>
+            <div class="amp-summary-row"><span>Địa chỉ</span><span style="max-width:280px;text-align:right">@Model.DiaChiNhan</span></div>
+            <div class="amp-summary-row"><span>Thanh toán</span><span>@(Model.PhuongThucThanhToan == PhuongThucThanhToan.ThanhToanKhiNhanHang ? "Khi nhận hàng (COD)" : "Chuyển khoản ngân hàng")</span></div>
+            <div class="amp-summary-row total"><span>Tổng thanh toán</span><span>@Model.TongTien.ToString("N0")₫</span></div>
+        </div>
+
+        @if (!string.IsNullOrEmpty(qrUrl) && bank != null)
+        {
+            <div class="amp-qr-box">
+                <h2 class="amp-heading-sm mb-3">Quét mã để chuyển khoản</h2>
+                <img src="@qrUrl" alt="QR thanh toán" />
+                <div class="amp-bank-info">
+                    <div><span>Ngân hàng</span><span>Vietcombank</span></div>
+                    <div><span>Số tài khoản</span><span>@bank.AccountNumber</span></div>
+                    <div><span>Chủ tài khoản</span><span>@bank.AccountName</span></div>
+                    <div><span>Số tiền</span><span>@Model.TongTien.ToString("N0")₫</span></div>
+                    <div><span>Nội dung CK</span><span>@Model.MaDonHang</span></div>
+                </div>
+                <p style="font-size:12px;color:var(--amp-muted);margin-top:14px">Đơn hàng sẽ được xác nhận trong vòng vài phút sau khi chúng tôi nhận được thanh toán của bạn.</p>
+            </div>
+        }
+
+        <div class="d-flex gap-2 justify-content-center mt-4">
+            <a asp-controller="DonHang" asp-action="ChiTiet" asp-route-id="@Model.Id" class="amp-btn amp-btn-outline">Theo dõi đơn hàng</a>
+            <a asp-controller="SanPham" asp-action="DanhSach" class="amp-btn amp-btn-primary">Tiếp tục mua sắm</a>
+        </div>
+    </div>
+</div>

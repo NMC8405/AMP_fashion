@@ -1,0 +1,86 @@
+@model List<DonHang>
+@{
+    ViewData["Title"] = "Đơn hàng của tôi";
+    ViewBag.SidebarActive = "orders";
+    string tab = ViewBag.TabHienTai ?? "";
+
+    (string label, string css)[] Buoc(DonHang d)
+    {
+        if (d.TrangThaiDonHang == TrangThaiDonHang.DaHuy)
+            return new[] { ("Đặt hàng", "done"), ("Đã hủy", "cancelled") };
+        var list = new List<(string, string)> { ("Đặt hàng", "done") };
+        list.Add(("Xác nhận", d.TrangThaiDonHang >= TrangThaiDonHang.DaXacNhan ? "done" : ""));
+        list.Add(("Đang giao", d.TrangThaiDonHang >= TrangThaiDonHang.DangGiao ? "done" : ""));
+        list.Add(("Hoàn tất", d.TrangThaiDonHang >= TrangThaiDonHang.DaGiao ? "done" : ""));
+        return list.ToArray();
+    }
+}
+<div class="amp-container" style="padding:40px 24px 90px">
+    <div class="amp-page-title">
+        <a asp-controller="Home" asp-action="Index" class="back"><i class="bi bi-arrow-left"></i></a>
+        <div>Đơn hàng của tôi</div>
+    </div>
+
+    <div class="amp-account-wrap">
+        <partial name="_TaiKhoanSidebar" />
+
+        <div>
+            <div class="amp-tabs">
+                <a asp-action="DanhSach" class="@(tab == "" ? "active" : "")">Tất cả</a>
+                <a asp-action="DanhSach" asp-route-tab="ChoXacNhan" class="@(tab == "ChoXacNhan" ? "active" : "")">Chờ xác nhận</a>
+                <a asp-action="DanhSach" asp-route-tab="DaXacNhan" class="@(tab == "DaXacNhan" ? "active" : "")">Đang xử lý</a>
+                <a asp-action="DanhSach" asp-route-tab="DangGiao" class="@(tab == "DangGiao" ? "active" : "")">Đang giao</a>
+                <a asp-action="DanhSach" asp-route-tab="DaGiao" class="@(tab == "DaGiao" ? "active" : "")">Đã giao</a>
+                <a asp-action="DanhSach" asp-route-tab="DaHuy" class="@(tab == "DaHuy" ? "active" : "")">Đã hủy</a>
+            </div>
+
+            @if (Model.Count == 0)
+            {
+                <div class="amp-empty">
+                    <i class="bi bi-bag-check"></i>
+                    <p>Không có đơn hàng nào trong mục này.</p>
+                </div>
+            }
+
+            @foreach (var don in Model)
+            {
+                <div class="amp-card mb-3">
+                    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
+                        <div>
+                            <strong>@don.MaDonHang</strong>
+                            <span style="color:var(--amp-muted);font-size:12.5px;margin-left:8px">Ngày đặt: @don.NgayDat.ToString("dd/MM/yyyy HH:mm")</span>
+                        </div>
+                        <span class="amp-status amp-status-@don.CssTrangThai">@don.TenTrangThai</span>
+                    </div>
+
+                    <div class="amp-tracker">
+                        @foreach (var (label, css) in Buoc(don))
+                        {
+                            <div class="step @css">
+                                <div class="dot"><i class="bi @(css == "done" ? "bi-check-lg" : css == "cancelled" ? "bi-x-lg" : "")"></i></div>
+                                <div class="label">@label</div>
+                            </div>
+                        }
+                    </div>
+
+                    @foreach (var ct in don.ChiTietDonHangs.Take(2))
+                    {
+                        <div class="d-flex gap-3 align-items-center mb-2">
+                            <img src="@ct.HinhAnh" class="amp-thumb-sm" />
+                            <div class="flex-grow-1" style="font-size:13px">@ct.TenSanPham <span style="color:var(--amp-muted)">x@ct.SoLuong</span></div>
+                        </div>
+                    }
+                    @if (don.ChiTietDonHangs.Count > 2)
+                    {
+                        <div style="font-size:12.5px;color:var(--amp-muted)">và @(don.ChiTietDonHangs.Count - 2) sản phẩm khác...</div>
+                    }
+
+                    <div class="d-flex justify-content-between align-items-center mt-3 pt-3" style="border-top:1px solid var(--amp-border)">
+                        <strong>Tổng thanh toán: @don.TongTien.ToString("N0")₫</strong>
+                        <a asp-action="ChiTiet" asp-route-id="@don.Id" class="amp-btn amp-btn-outline amp-btn-sm">Xem chi tiết</a>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>

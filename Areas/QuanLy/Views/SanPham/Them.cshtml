@@ -1,0 +1,17 @@
+@model SanPhamFormViewModel
+@{
+    ViewData["Title"] = "Thêm sản phẩm";
+}
+<div asp-validation-summary="ModelOnly" class="validation-summary-errors"></div>
+
+<form asp-action="Them" method="post">
+    <partial name="_SanPhamForm" />
+    <div class="d-flex gap-2 mt-3">
+        <button type="submit" class="amp-btn amp-btn-primary">Lưu sản phẩm</button>
+        <a asp-action="DanhSach" class="amp-btn amp-btn-outline">Hủy</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

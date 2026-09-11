@@ -1,0 +1,89 @@
+@model GioHangViewModel
+@{
+    ViewData["Title"] = "Giỏ hàng của bạn";
+    var lienQuan = ViewBag.SanPhamLienQuan as List<SanPham> ?? new();
+}
+<div class="amp-container" style="padding:40px 24px 90px">
+    <div class="amp-page-title">
+        <a asp-controller="SanPham" asp-action="DanhSach" class="back"><i class="bi bi-arrow-left"></i></a>
+        <div>Giỏ hàng của bạn <small>@Model.TongSoLuong sản phẩm</small></div>
+    </div>
+
+    @if (Model.DongSanPhams.Count == 0)
+    {
+        <div class="amp-empty">
+            <i class="bi bi-bag"></i>
+            <p>Giỏ hàng của bạn đang trống.</p>
+            <a asp-controller="SanPham" asp-action="DanhSach" class="amp-btn amp-btn-primary">Tiếp tục mua sắm</a>
+        </div>
+    }
+    else
+    {
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="amp-card">
+                    @foreach (var item in Model.DongSanPhams)
+                    {
+                        var bt = item.BienTheSanPham!;
+                        <div class="amp-cart-line">
+                            <img src="@bt.SanPham?.HinhAnhChinh" alt="@bt.SanPham?.TenSanPham" />
+                            <div class="meta">
+                                <a asp-controller="SanPham" asp-action="ChiTiet" asp-route-id="@bt.SanPhamId" class="name" style="text-decoration:none">@bt.SanPham?.TenSanPham</a>
+                                <div class="opts">
+                                    <span class="amp-swatch" style="background:@bt.MauSac?.MaHex"></span>@bt.MauSac?.TenMau · Size @bt.KichThuoc?.TenKichThuoc
+                                </div>
+                                <div style="font-size:13px;font-weight:700;margin-top:6px">@(bt.SanPham?.GiaHienThi.ToString("N0"))₫</div>
+                            </div>
+                            <form asp-controller="GioHang" asp-action="CapNhat" method="post">
+                                <input type="hidden" name="GioHangItemId" value="@item.Id" />
+                                <div class="amp-qty-box" data-auto-submit>
+                                    <button type="button" data-qty-minus>−</button>
+                                    <input type="number" name="SoLuong" value="@item.SoLuong" min="1" max="@bt.SoLuongTon" />
+                                    <button type="button" data-qty-plus>+</button>
+                                </div>
+                            </form>
+                            <div class="text-end">
+                                <div style="font-weight:800;margin-bottom:8px">@item.ThanhTien.ToString("N0")₫</div>
+                                <form asp-controller="GioHang" asp-action="Xoa" method="post">
+                                    <input type="hidden" name="gioHangItemId" value="@item.Id" />
+                                    <button type="submit" class="amp-btn-ghost" style="color:var(--amp-danger);font-size:12px">Xóa</button>
+                                </form>
+                            </div>
+                        </div>
+                    }
+                    <div class="d-flex justify-content-between mt-3">
+                        <form asp-controller="GioHang" asp-action="XoaTatCa" method="post">
+                            <button type="submit" class="amp-btn-ghost" style="color:var(--amp-danger)" onclick="return confirm('Xóa toàn bộ giỏ hàng?')">Xóa giỏ hàng</button>
+                        </form>
+                        <a asp-controller="SanPham" asp-action="DanhSach" class="amp-btn amp-btn-outline">Tiếp tục mua sắm</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="amp-summary-box">
+                    <h2 class="amp-heading-sm mb-3">Tóm tắt đơn hàng</h2>
+                    <div class="amp-summary-row"><span>Tạm tính</span><span>@Model.TongTien.ToString("N0")₫</span></div>
+                    <div class="amp-summary-row total"><span>Tổng thanh toán</span><span>@Model.TongTien.ToString("N0")₫</span></div>
+                    <form asp-controller="DonHang" asp-action="BatDauThanhToan" method="post" class="mt-3">
+                        <button type="submit" class="amp-btn amp-btn-primary amp-btn-block">Thanh toán ngay</button>
+                    </form>
+                    <p style="font-size:11.5px;color:var(--amp-muted);text-align:center;margin-top:14px"><i class="bi bi-shield-check me-1"></i>Thanh toán an toàn &amp; bảo mật</p>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (lienQuan.Count > 0)
+    {
+        <div class="amp-section-title mt-5 pt-4" style="border-top:1px solid var(--amp-border)">
+            <h2>Sản phẩm liên quan</h2>
+        </div>
+        <div class="amp-product-grid">
+            @foreach (var sp in lienQuan)
+            {
+                <partial name="_ProductCard" model="sp" />
+            }
+        </div>
+    }
+</div>

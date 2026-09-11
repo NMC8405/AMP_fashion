@@ -1,0 +1,74 @@
+@model List<DanhMuc>
+@{
+    ViewData["Title"] = "Quản lý danh mục";
+}
+<div class="amp-table-toolbar">
+    <span class="count" style="font-size:13px;color:var(--amp-muted)">@Model.Count danh mục</span>
+    <button type="button" class="amp-btn amp-btn-primary" data-bs-toggle="modal" data-bs-target="#modalThem"><i class="bi bi-plus-lg me-1"></i>Thêm danh mục</button>
+</div>
+
+<div class="amp-table-card">
+    <table class="amp-table">
+        <thead><tr><th>Tên danh mục</th><th>Mô tả</th><th>Số sản phẩm</th><th></th></tr></thead>
+        <tbody>
+            @if (Model.Count == 0)
+            {
+                <tr><td colspan="4" class="text-center text-muted py-4">Chưa có danh mục nào.</td></tr>
+            }
+            @foreach (var dm in Model)
+            {
+                <tr>
+                    <td>@dm.TenDanhMuc</td>
+                    <td>@dm.MoTa</td>
+                    <td>@dm.SanPhams.Count</td>
+                    <td>
+                        <div class="d-flex gap-1">
+                            <button type="button" class="amp-btn amp-btn-outline amp-btn-sm" data-bs-toggle="modal" data-bs-target="#modalSua@(dm.Id)">Sửa</button>
+                            <form asp-action="Xoa" method="post" onsubmit="return confirm('Xóa danh mục này?')">
+                                <input type="hidden" name="id" value="@dm.Id" />
+                                <button type="submit" class="amp-btn amp-btn-danger amp-btn-sm">Xóa</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+
+                <div class="modal fade" id="modalSua@(dm.Id)" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <form asp-action="Sua" method="post">
+                                <input type="hidden" name="Id" value="@dm.Id" />
+                                <div class="modal-header"><h5 class="modal-title">Sửa danh mục</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                                <div class="modal-body">
+                                    <div class="amp-field"><label class="amp-label">Tên danh mục</label><input name="TenDanhMuc" value="@dm.TenDanhMuc" class="form-control" required /></div>
+                                    <div class="amp-field"><label class="amp-label">Mô tả</label><textarea name="MoTa" class="form-control" rows="2">@dm.MoTa</textarea></div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="amp-btn amp-btn-outline" data-bs-dismiss="modal">Đóng</button>
+                                    <button type="submit" class="amp-btn amp-btn-primary">Lưu</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            }
+        </tbody>
+    </table>
+</div>
+
+<div class="modal fade" id="modalThem" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="Them" method="post">
+                <div class="modal-header"><h5 class="modal-title">Thêm danh mục</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <div class="amp-field"><label class="amp-label">Tên danh mục</label><input name="TenDanhMuc" class="form-control" required /></div>
+                    <div class="amp-field"><label class="amp-label">Mô tả</label><textarea name="MoTa" class="form-control" rows="2"></textarea></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="amp-btn amp-btn-outline" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="amp-btn amp-btn-primary">Thêm</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

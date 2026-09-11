@@ -1,0 +1,43 @@
+@model List<SanPham>
+@{
+    ViewData["Title"] = "Sản phẩm yêu thích";
+    var goiY = ViewBag.GoiY as List<SanPham> ?? new();
+    ViewBag.YeuThichIds = Model.Select(s => s.Id).ToHashSet();
+}
+<div class="amp-container" style="padding:40px 24px 90px">
+    <div class="amp-page-title">
+        <a asp-controller="Home" asp-action="Index" class="back"><i class="bi bi-arrow-left"></i></a>
+        <div>Sản phẩm yêu thích của bạn <small>@Model.Count sản phẩm</small></div>
+    </div>
+
+    @if (Model.Count == 0)
+    {
+        <div class="amp-empty">
+            <i class="bi bi-heart"></i>
+            <p>Bạn chưa có sản phẩm yêu thích nào.</p>
+            <a asp-controller="SanPham" asp-action="DanhSach" class="amp-btn amp-btn-primary">Khám phá sản phẩm</a>
+        </div>
+    }
+    else
+    {
+        <div class="amp-product-grid">
+            @foreach (var sp in Model)
+            {
+                <partial name="_ProductCard" model="sp" />
+            }
+        </div>
+    }
+
+    @if (goiY.Count > 0)
+    {
+        <div class="amp-section-title mt-5 pt-4" style="border-top:1px solid var(--amp-border)">
+            <h2>Sản phẩm gợi ý</h2>
+        </div>
+        <div class="amp-product-grid">
+            @foreach (var sp in goiY)
+            {
+                <partial name="_ProductCard" model="sp" />
+            }
+        </div>
+    }
+</div>

@@ -1,0 +1,70 @@
+@model ThongTinCaNhanViewModel
+@{
+    ViewData["Title"] = "Thông tin cá nhân";
+    ViewBag.SidebarActive = "info";
+}
+<div class="amp-container" style="padding:40px 24px 90px">
+    <div class="amp-page-title">Thông tin cá nhân</div>
+    <div class="amp-account-wrap">
+        <partial name="_TaiKhoanSidebar" />
+
+        <div class="amp-card">
+            <h2 class="amp-heading-md mb-4">Chỉnh sửa thông tin</h2>
+
+            <div asp-validation-summary="ModelOnly" class="validation-summary-errors"></div>
+
+            <form asp-action="ThongTinCaNhan" method="post">
+                <input type="hidden" asp-for="Email" />
+                <input type="hidden" asp-for="AnhDaiDien" />
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="amp-field">
+                            <label asp-for="HoTen" class="amp-label"></label>
+                            <input asp-for="HoTen" class="form-control" />
+                            <span asp-validation-for="HoTen" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="amp-field">
+                            <label class="amp-label">Email</label>
+                            <input value="@Model.Email" class="form-control" disabled />
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="amp-field">
+                            <label asp-for="SoDienThoai" class="amp-label"></label>
+                            <input asp-for="SoDienThoai" class="form-control" />
+                            <span asp-validation-for="SoDienThoai" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="amp-field">
+                            <label asp-for="NgaySinh" class="amp-label"><span class="opt">(tùy chọn)</span></label>
+                            <input asp-for="NgaySinh" class="form-control" type="date" />
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="amp-field">
+                            <label asp-for="GioiTinh" class="amp-label"></label>
+                            <select asp-for="GioiTinh" class="form-select" asp-items="Html.GetEnumSelectList<GioiTinh>()"></select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="amp-field">
+                            <label asp-for="DiaChi" class="amp-label"><span class="opt">(tùy chọn)</span></label>
+                            <input asp-for="DiaChi" class="form-control" placeholder="Địa chỉ mặc định khi đặt hàng" />
+                        </div>
+                    </div>
+                </div>
+                <div class="d-flex gap-2 mt-2">
+                    <button type="submit" class="amp-btn amp-btn-primary">Lưu thay đổi</button>
+                    <a asp-controller="Home" asp-action="Index" class="amp-btn amp-btn-outline">Hủy</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,119 @@
+@model ThanhToanViewModel
+@{
+    ViewData["Title"] = "Thanh toán";
+}
+<div class="amp-container" style="padding:40px 24px 90px">
+    <div class="amp-page-title">
+        <a asp-controller="GioHang" asp-action="Index" class="back"><i class="bi bi-arrow-left"></i></a>
+        <div>Thanh toán</div>
+    </div>
+
+    <form asp-controller="DonHang" asp-action="ThanhToan" method="post" id="checkoutForm">
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="amp-card">
+                    <div class="amp-checkout-section" style="padding-top:0">
+                        <h5><span class="num">1</span>Thông tin người nhận</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="amp-field">
+                                    <label asp-for="TenNguoiNhan" class="amp-label"></label>
+                                    <input asp-for="TenNguoiNhan" class="form-control" />
+                                    <span asp-validation-for="TenNguoiNhan" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="amp-field">
+                                    <label asp-for="SoDienThoaiNhan" class="amp-label"></label>
+                                    <input asp-for="SoDienThoaiNhan" class="form-control" />
+                                    <span asp-validation-for="SoDienThoaiNhan" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="amp-checkout-section">
+                        <h5><span class="num">2</span>Địa chỉ giao hàng</h5>
+                        <div class="amp-field">
+                            <label asp-for="DiaChiNhan" class="amp-label"></label>
+                            <textarea asp-for="DiaChiNhan" class="form-control" rows="2" placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành"></textarea>
+                            <span asp-validation-for="DiaChiNhan" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="amp-checkout-section">
+                        <h5><span class="num">3</span>Sản phẩm đặt mua (@Model.DongHang.Count)</h5>
+                        @foreach (var dong in Model.DongHang)
+                        {
+                            <div class="d-flex gap-3 align-items-center mb-3">
+                                <img src="@dong.HinhAnh" class="amp-thumb-sm" style="width:56px;height:68px" />
+                                <div class="flex-grow-1">
+                                    <div style="font-size:13.5px;font-weight:600">@dong.TenSanPham</div>
+                                    <div style="font-size:12px;color:var(--amp-muted)">@dong.TenMau · @dong.TenKichThuoc · SL: @dong.SoLuong</div>
+                                </div>
+                                <div style="font-weight:700;font-size:13.5px">@dong.ThanhTien.ToString("N0")₫</div>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="amp-checkout-section">
+                        <h5><span class="num">4</span>Mã giảm giá</h5>
+                        <div class="d-flex gap-2">
+                            <input asp-for="MaGiamGia" class="form-control" placeholder="Nhập mã giảm giá" />
+                            <button type="submit" name="hanhDong" value="ApDungMa" class="amp-btn amp-btn-outline" style="flex-shrink:0">Áp dụng</button>
+                        </div>
+                        @if (!string.IsNullOrEmpty(Model.ThongBaoMa))
+                        {
+                            <div class="amp-alert @(Model.MaHopLe ? "amp-alert-success" : "amp-alert-danger") mt-2 mb-0">@Model.ThongBaoMa</div>
+                        }
+                    </div>
+
+                    <div class="amp-checkout-section">
+                        <h5><span class="num">5</span>Hình thức thanh toán</h5>
+                        <div class="amp-pay-option">
+                            <input type="radio" asp-for="PhuongThucThanhToan" value="@PhuongThucThanhToan.ThanhToanKhiNhanHang" id="payCod" />
+                            <label for="payCod">Thanh toán khi nhận hàng (COD)</label>
+                        </div>
+                        <div class="amp-pay-option">
+                            <input type="radio" asp-for="PhuongThucThanhToan" value="@PhuongThucThanhToan.ChuyenKhoanNganHang" id="payBank" />
+                            <label for="payBank">Chuyển khoản ngân hàng (quét mã QR)</label>
+                        </div>
+                        <div data-bank-block style="display:none">
+                            <p style="font-size:12.5px;color:var(--amp-muted)"><i class="bi bi-info-circle me-1"></i>Mã QR thanh toán và thông tin chuyển khoản sẽ hiển thị ở bước tiếp theo sau khi bạn đặt hàng.</p>
+                        </div>
+                    </div>
+
+                    <div class="amp-checkout-section" style="border-bottom:none">
+                        <h5><span class="num">6</span>Ghi chú đơn hàng <span class="opt" style="text-transform:none;font-weight:400;font-size:12px;margin-left:6px">(tùy chọn)</span></h5>
+                        <textarea asp-for="GhiChu" class="form-control" rows="2" placeholder="Ghi chú cho người bán, ví dụ thời gian giao hàng mong muốn"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="amp-summary-box">
+                    <h2 class="amp-heading-sm mb-3">Tóm tắt đơn hàng</h2>
+                    <div class="amp-summary-row"><span>Tạm tính</span><span>@Model.TamTinh.ToString("N0")₫</span></div>
+                    <div class="amp-summary-row"><span>Phí vận chuyển</span><span>@(Model.PhiVanChuyen == 0 ? "Miễn phí" : Model.PhiVanChuyen.ToString("N0") + "₫")</span></div>
+                    @if (Model.SoTienGiamGia > 0)
+                    {
+                        <div class="amp-summary-row"><span>Giảm giá</span><span class="neg">-@Model.SoTienGiamGia.ToString("N0")₫</span></div>
+                    }
+                    <div class="amp-summary-row total"><span>Tổng thanh toán</span><span>@Model.TongTien.ToString("N0")₫</span></div>
+
+                    <button type="submit" name="hanhDong" value="DatHang" class="amp-btn amp-btn-primary amp-btn-block mt-3">Đặt hàng</button>
+                    <p style="font-size:11.5px;color:var(--amp-muted);text-align:center;margin-top:12px">Bằng việc đặt hàng, bạn đồng ý với <a href="#" class="amp-link">Điều khoản dịch vụ</a> của AMP.</p>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.querySelectorAll('input[name="PhuongThucThanhToan"]').forEach(r => {
+            if (r.checked) r.dispatchEvent(new Event('change'));
+        });
+    </script>
+}

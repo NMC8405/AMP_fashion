@@ -1,0 +1,282 @@
+@model SanPhamChiTietViewModel
+@{
+    ViewData["Title"] = Model.SanPham.TenSanPham;
+    var sp = Model.SanPham;
+    var anhPhu = sp.HinhAnhs?.OrderBy(h => h.ThuTu).ToList() ?? new();
+    var tonKhoJson = System.Text.Json.JsonSerializer.Serialize(Model.TonKhoTheoBienThe);
+}
+<div class="amp-container" style="padding:34px 24px 90px">
+    <nav style="font-size:12.5px;color:var(--amp-muted);margin-bottom:24px">
+        <a asp-controller="Home" asp-action="Index" class="amp-link" style="text-decoration:none">Trang chủ</a> /
+        <a asp-controller="SanPham" asp-action="DanhSach" asp-route-danhMucId="@sp.DanhMucId" class="amp-link" style="text-decoration:none">@sp.DanhMuc?.TenDanhMuc</a> /
+        <span>@sp.TenSanPham</span>
+    </nav>
+
+    <div class="row g-5">
+        <div class="col-lg-6">
+            <div class="amp-product-thumb mb-3" style="aspect-ratio:3/4;position:relative;overflow:hidden;border-radius:6px;background:#f7f7f7">
+                <img id="anhChinh" src="@sp.HinhAnhChinh" alt="@sp.TenSanPham" style="width:100%;height:100%;object-fit:cover;transition:opacity .2s ease-in-out" />
+            </div>
+            <div class="d-flex gap-2 flex-wrap" id="galleryThumbs">
+                <img src="@sp.HinhAnhChinh" class="amp-thumb-sm thumb-item active" style="width:68px;height:88px;cursor:pointer;object-fit:cover;border:2px solid var(--amp-ink);border-radius:4px;transition:all .2s" onclick="doiAnhChinh(this.src, null, this)" title="Ảnh chính" />
+                @foreach (var mau in Model.MauSacsCoSan)
+                {
+                    if (Model.AnhTheoMauSac.TryGetValue(mau.Id, out var anhM) && !string.IsNullOrEmpty(anhM) && anhM != sp.HinhAnhChinh)
+                    {
+                        <img src="@anhM" class="amp-thumb-sm thumb-item" data-mau-id="@mau.Id" style="width:68px;height:88px;cursor:pointer;object-fit:cover;border:1px solid var(--amp-border);border-radius:4px;transition:all .2s" onclick="chonMauTheoAnh(@mau.Id, '@mau.TenMau', '@anhM', this)" title="Màu @mau.TenMau" />
+                    }
+                }
+                @foreach (var a in anhPhu)
+                {
+                    <img src="@a.DuongDan" class="amp-thumb-sm thumb-item" style="width:68px;height:88px;cursor:pointer;object-fit:cover;border:1px solid var(--amp-border);border-radius:4px;transition:all .2s" onclick="doiAnhChinh(this.src, null, this)" />
+                }
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            @if (!string.IsNullOrEmpty(sp.ThuongHieu))
+            {
+                <span class="amp-product-brand">@sp.ThuongHieu</span>
+            }
+            <h1 class="amp-heading-lg" style="text-transform:none;letter-spacing:0;font-size:26px;margin-bottom:10px">@sp.TenSanPham</h1>
+
+            <div class="amp-rating mb-3">
+                @{ var diem = sp.DiemDanhGiaTrungBinh; }
+                @for (var i = 1; i <= 5; i++)
+                {
+                    <i class="bi @(i <= Math.Round(diem) ? "bi-star-fill" : "bi-star")"></i>
+                }
+                <span class="cnt">@diem.ToString("0.0") (@sp.DanhGias.Count đánh giá)</span>
+            </div>
+
+            <div class="amp-price-row mb-4" style="font-size:22px">
+                <span class="amp-price @(sp.DangGiamGia ? "sale" : "")" style="font-size:24px">@sp.GiaHienThi.ToString("N0")₫</span>
+                @if (sp.DangGiamGia)
+                {
+                    <span class="amp-price-old" style="font-size:16px">@sp.GiaGoc.ToString("N0")₫</span>
+                }
+            </div>
+
+            @if (!string.IsNullOrEmpty(sp.MoTa))
+            {
+                <p style="color:var(--amp-ink-soft);font-size:14px;margin-bottom:26px">@sp.MoTa</p>
+            }
+
+            <form asp-controller="GioHang" asp-action="Them" method="post" id="formThemGio">
+                <input type="hidden" name="SanPhamId" value="@sp.Id" />
+                <input type="hidden" name="MauSacId" id="inpMauSac" />
+                <input type="hidden" name="KichThuocId" id="inpKichThuoc" />
+                <input type="hidden" name="MuaNgay" id="inpMuaNgay" value="false" />
+
+                @if (Model.MauSacsCoSan.Count > 0)
+                {
+                    <div class="amp-field">
+                        <label class="amp-label">Màu sắc: <span id="tenMauChon" style="font-weight:700;color:var(--amp-ink)">chưa chọn</span></label>
+                        <div class="d-flex gap-2 flex-wrap" id="swatchWrap">
+                            @foreach (var mau in Model.MauSacsCoSan)
+                            {
+                                var anhMau = (Model.AnhTheoMauSac.TryGetValue(mau.Id, out var url) ? url : sp.HinhAnhChinh) ?? "";
+                                <button type="button" class="btn-swatch" data-mau-id="@mau.Id" data-mau-ten="@mau.TenMau"
+                                        data-anh="@anhMau"
+                                        style="width:38px;height:38px;border-radius:50%;border:2px solid var(--amp-border-strong);background:@mau.MaHex;cursor:pointer;transition:transform .15s, outline .15s"
+                                        title="@mau.TenMau" onclick="chonMau(@mau.Id, '@mau.TenMau', '@anhMau', this)"></button>
+                            }
+                        </div>
+                    </div>
+                }
+
+                @if (Model.KichThuocsCoSan.Count > 0)
+                {
+                    <div class="amp-field">
+                        <label class="amp-label">Kích thước</label>
+                        <div class="d-flex gap-2 flex-wrap" id="sizeWrap">
+                            @foreach (var size in Model.KichThuocsCoSan)
+                            {
+                                <button type="button" class="amp-btn amp-btn-outline amp-btn-sm size-btn" data-size-id="@size.Id" onclick="chonSize(@size.Id, this)">@size.TenKichThuoc</button>
+                            }
+                        </div>
+                        <div id="tonKhoBao" style="font-size:12.5px;color:var(--amp-muted);margin-top:8px"></div>
+                    </div>
+                }
+
+                <div class="amp-field">
+                    <label class="amp-label">Số lượng</label>
+                    <div class="amp-qty-box">
+                        <button type="button" data-qty-minus>−</button>
+                        <input type="number" name="SoLuong" value="1" min="1" max="99" />
+                        <button type="button" data-qty-plus>+</button>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2 flex-wrap mt-4">
+                    <button type="submit" class="amp-btn amp-btn-outline" style="flex:1;min-width:180px" onclick="return xacNhanChon()">
+                        <i class="bi bi-bag-plus me-1"></i> Thêm vào giỏ
+                    </button>
+                    <button type="submit" class="amp-btn amp-btn-primary" style="flex:1;min-width:180px" onclick="document.getElementById('inpMuaNgay').value='true'; return xacNhanChon()">
+                        Mua ngay
+                    </button>
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <input type="hidden" name="veTrang" value="chi-tiet" form="formThemGio" />
+                        <button type="submit" formaction="@Url.Action("Them", "YeuThich")" formmethod="post" class="amp-btn amp-btn-outline @(Model.DaYeuThich ? "active" : "")" title="Yêu thích">
+                            <i class="bi @(Model.DaYeuThich ? "bi-heart-fill" : "bi-heart")"></i>
+                        </button>
+                    }
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @* ============ ĐÁNH GIÁ SẢN PHẨM ============ *@
+    <div class="mt-5 pt-4" style="border-top:1px solid var(--amp-border)">
+        <h2 class="amp-heading-md mb-4">Đánh giá sản phẩm (@Model.DanhGias.Count)</h2>
+
+        @if (Model.DanhGias.Count == 0)
+        {
+            <p style="color:var(--amp-muted);font-size:14px">Chưa có đánh giá nào cho sản phẩm này.</p>
+        }
+        else
+        {
+            <div class="d-flex flex-column gap-3 mb-3" style="max-width:720px">
+                @foreach (var dg in Model.DanhGias.Take(10))
+                {
+                    <div class="amp-card" style="padding:18px 20px">
+                        <div class="d-flex justify-content-between mb-1">
+                            <strong style="font-size:13.5px">@(dg.NguoiDung?.HoTen ?? "Khách hàng")</strong>
+                            <span style="font-size:12px;color:var(--amp-muted)">@dg.NgayDanhGia.ToString("dd/MM/yyyy")</span>
+                        </div>
+                        <div class="amp-rating mb-2">
+                            @for (var i = 1; i <= 5; i++)
+                            {
+                                <i class="bi @(i <= dg.SoSao ? "bi-star-fill" : "bi-star")"></i>
+                            }
+                        </div>
+                        <p style="font-size:13.5px;margin:0;color:var(--amp-ink-soft)">@dg.NoiDung</p>
+                    </div>
+                }
+            </div>
+        }
+
+        @if (Model.CoTheDanhGia)
+        {
+            <p style="font-size:13.5px"><i class="bi bi-info-circle me-1"></i>Bạn đã mua sản phẩm này. <a asp-controller="DonHang" asp-action="DanhSach" class="amp-link">Đến trang đơn hàng để gửi đánh giá</a>.</p>
+        }
+    </div>
+
+    @if (Model.SanPhamLienQuan.Count > 0)
+    {
+        <div class="amp-section-title mt-5 pt-4" style="border-top:1px solid var(--amp-border)">
+            <h2>Sản phẩm liên quan</h2>
+        </div>
+        <div class="amp-product-grid">
+            @foreach (var lq in Model.SanPhamLienQuan)
+            {
+                <partial name="_ProductCard" model="lq" />
+            }
+        </div>
+    }
+</div>
+
+@section Scripts {
+<script>
+    const tonKho = @Html.Raw(tonKhoJson);
+    const anhTheoMau = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.AnhTheoMauSac));
+    let mauDaChon = null, sizeDaChon = null;
+
+    function doiAnhChinh(src, mauId, thumbEl) {
+        const img = document.getElementById('anhChinh');
+        img.style.opacity = '0.3';
+        setTimeout(() => {
+            img.src = src;
+            img.style.opacity = '1';
+        }, 120);
+
+        document.querySelectorAll('#galleryThumbs .thumb-item').forEach(t => {
+            t.style.borderColor = 'var(--amp-border)';
+            t.style.boxShadow = 'none';
+        });
+        if (thumbEl) {
+            thumbEl.style.borderColor = 'var(--amp-ink)';
+            thumbEl.style.boxShadow = '0 2px 6px rgba(0,0,0,0.15)';
+        }
+    }
+
+    function chonMau(id, ten, anh, btn) {
+        mauDaChon = id;
+        document.getElementById('inpMauSac').value = id;
+        document.getElementById('tenMauChon').textContent = ten;
+
+        // Cập nhật viền nút màu
+        document.querySelectorAll('#swatchWrap .btn-swatch').forEach(b => {
+            b.style.outline = '';
+            b.style.transform = 'scale(1)';
+        });
+        if (btn) {
+            btn.style.outline = '2px solid var(--amp-ink)';
+            btn.style.outlineOffset = '2px';
+            btn.style.transform = 'scale(1.15)';
+        }
+
+        // Đổi ảnh chính hiển thị theo màu
+        const anhUrl = anh || anhTheoMau[id];
+        if (anhUrl) {
+            const matchedThumb = document.querySelector(`#galleryThumbs img[data-mau-id="${id}"]`);
+            doiAnhChinh(anhUrl, id, matchedThumb);
+        }
+
+        capNhatTonKho();
+    }
+
+    function chonMauTheoAnh(id, ten, anh, thumbEl) {
+        const btn = document.querySelector(`#swatchWrap .btn-swatch[data-mau-id="${id}"]`);
+        chonMau(id, ten, anh, btn);
+        if (thumbEl) {
+            document.querySelectorAll('#galleryThumbs .thumb-item').forEach(t => {
+                t.style.borderColor = 'var(--amp-border)';
+            });
+            thumbEl.style.borderColor = 'var(--amp-ink)';
+        }
+    }
+
+    function chonSize(id, btn) {
+        sizeDaChon = id;
+        document.getElementById('inpKichThuoc').value = id;
+        document.querySelectorAll('#sizeWrap .size-btn').forEach(b => b.classList.remove('amp-btn-primary'));
+        btn.classList.add('amp-btn-primary');
+        capNhatTonKho();
+    }
+
+    function capNhatTonKho() {
+        const bao = document.getElementById('tonKhoBao');
+        if (!bao) return;
+        if (mauDaChon && sizeDaChon) {
+            const soLuong = tonKho[mauDaChon + '-' + sizeDaChon] ?? 0;
+            bao.textContent = soLuong > 0 ? `Còn ${soLuong} sản phẩm trong kho` : 'Hết hàng với màu và kích thước này';
+            bao.style.color = soLuong > 0 ? 'var(--amp-success)' : 'var(--amp-danger)';
+        } else {
+            bao.textContent = '';
+        }
+
+        // Vô hiệu hóa size hết hàng theo màu đã chọn (UC07)
+        if (mauDaChon) {
+            document.querySelectorAll('#sizeWrap .size-btn').forEach(b => {
+                const sid = b.getAttribute('data-size-id');
+                const sl = tonKho[mauDaChon + '-' + sid] ?? 0;
+                b.disabled = sl <= 0;
+                b.style.opacity = sl <= 0 ? '0.35' : '1';
+                b.style.textDecoration = sl <= 0 ? 'line-through' : 'none';
+            });
+        }
+    }
+
+    function xacNhanChon() {
+        const coMau = document.querySelectorAll('#swatchWrap .btn-swatch').length > 0;
+        const coSize = document.querySelectorAll('#sizeWrap .size-btn').length > 0;
+        if ((coMau && !mauDaChon) || (coSize && !sizeDaChon)) {
+            alert('Vui lòng chọn màu sắc và kích thước trước khi tiếp tục.');
+            return false;
+        }
+        return true;
+    }
+</script>
+}

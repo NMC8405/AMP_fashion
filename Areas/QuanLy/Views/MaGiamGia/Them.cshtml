@@ -1,0 +1,13 @@
+@model MaGiamGia
+@{
+    ViewData["Title"] = "Thêm mã giảm giá";
+}
+<div asp-validation-summary="ModelOnly" class="validation-summary-errors"></div>
+<form asp-action="Them" method="post">
+    <partial name="_MaGiamGiaForm" />
+    <div class="d-flex gap-2 mt-3">
+        <button type="submit" class="amp-btn amp-btn-primary">Lưu</button>
+        <a asp-action="DanhSach" class="amp-btn amp-btn-outline">Hủy</a>
+    </div>
+</form>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

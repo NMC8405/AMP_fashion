@@ -1,0 +1,58 @@
+@model XacThucOtpViewModel
+@{
+    ViewData["Title"] = "Xác thực OTP";
+    string email = ViewBag.Email ?? "";
+    string? devOtp = ViewBag.DevOtp;
+}
+<div class="amp-auth-wrap">
+    <div class="amp-auth-card text-center">
+        <div class="amp-logo mb-2" style="font-size:20px">AMP</div>
+        <h1 style="font-size:20px">Nhập mã xác nhận</h1>
+        <p class="amp-sub">Mã xác nhận đã được gửi đến email <strong>@email</strong></p>
+
+        @if (!string.IsNullOrEmpty(devOtp))
+        {
+            <div class="amp-dev-otp">
+                <i class="bi bi-info-circle me-1"></i>
+                Chế độ Development (chưa cấu hình SMTP thật trong appsettings.json): mã OTP của bạn là <strong>@devOtp</strong>
+            </div>
+        }
+
+        <div asp-validation-summary="ModelOnly" class="validation-summary-errors"></div>
+
+        <form asp-action="XacThucOtp" method="post" id="otpForm">
+            <input type="hidden" asp-for="Muc" />
+            <input type="hidden" name="MaOtp" data-otp-hidden />
+
+            <div class="amp-otp-row" data-otp-wrap>
+                <input type="text" inputmode="numeric" maxlength="1" class="amp-otp-box" />
+                <input type="text" inputmode="numeric" maxlength="1" class="amp-otp-box" />
+                <input type="text" inputmode="numeric" maxlength="1" class="amp-otp-box" />
+                <input type="text" inputmode="numeric" maxlength="1" class="amp-otp-box" />
+                <input type="text" inputmode="numeric" maxlength="1" class="amp-otp-box" />
+                <input type="text" inputmode="numeric" maxlength="1" class="amp-otp-box" />
+            </div>
+            <span asp-validation-for="MaOtp" class="text-danger"></span>
+
+            <div class="amp-otp-timer" data-otp-countdown="60">
+                <span data-otp-timer-text>Gửi lại mã sau 60s</span>
+                <button type="button" data-otp-resend id="btnResend">Gửi lại mã</button>
+            </div>
+
+            <button type="submit" class="amp-btn amp-btn-primary amp-btn-block">Xác nhận</button>
+        </form>
+
+        <form asp-action="GuiLaiOtp" method="post" id="resendForm">
+            <input type="hidden" name="muc" value="@Model.Muc" />
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.getElementById('btnResend').addEventListener('click', function () {
+            document.getElementById('resendForm').submit();
+        });
+    </script>
+}

@@ -1,0 +1,27 @@
+@model QuenMatKhauViewModel
+@{
+    ViewData["Title"] = "Quên mật khẩu";
+}
+<div class="amp-auth-wrap">
+    <div class="amp-auth-card">
+        <h1>Quên mật khẩu</h1>
+        <p class="amp-sub">Nhập email đã đăng ký để nhận mã xác nhận</p>
+
+        <div asp-validation-summary="ModelOnly" class="validation-summary-errors"></div>
+
+        <form asp-action="QuenMatKhau" method="post">
+            <div class="amp-field">
+                <label asp-for="Email" class="amp-label"></label>
+                <input asp-for="Email" class="form-control" placeholder="Nhập email của bạn" autofocus />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+            <button type="submit" class="amp-btn amp-btn-primary amp-btn-block">Gửi mã xác nhận</button>
+        </form>
+
+        <p class="amp-auth-foot"><a asp-action="DangNhap" class="amp-link">Quay lại đăng nhập</a></p>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

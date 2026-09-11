@@ -1,0 +1,184 @@
+@model DonHang
+@{
+    ViewData["Title"] = "Chi tiết đơn hàng";
+    ViewBag.SidebarActive = "orders";
+    var daDanhGia = ViewBag.SanPhamDaDanhGia as List<int> ?? new();
+
+    (string label, string css)[] Buoc()
+    {
+        if (Model.TrangThaiDonHang == TrangThaiDonHang.DaHuy)
+            return new[] { ("Đặt hàng", "done"), ("Đã hủy", "cancelled") };
+        return new[]
+        {
+            ("Đặt hàng", "done"),
+            ("Xác nhận", Model.TrangThaiDonHang >= TrangThaiDonHang.DaXacNhan ? "done" : ""),
+            ("Đang giao", Model.TrangThaiDonHang >= TrangThaiDonHang.DangGiao ? "done" : ""),
+            ("Hoàn tất", Model.TrangThaiDonHang >= TrangThaiDonHang.DaGiao ? "done" : "")
+        };
+    }
+}
+<div class="amp-container" style="padding:40px 24px 90px">
+    <div class="amp-page-title">
+        <a asp-action="DanhSach" class="back"><i class="bi bi-arrow-left"></i></a>
+        <div>Chi tiết đơn hàng <small>@Model.MaDonHang</small></div>
+    </div>
+
+    <div class="amp-account-wrap">
+        <partial name="_TaiKhoanSidebar" />
+
+        <div>
+            <div class="amp-card mb-3">
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+                    <div>
+                        <strong>@Model.MaDonHang</strong>
+                        <div style="color:var(--amp-muted);font-size:12.5px">Đặt lúc @Model.NgayDat.ToString("HH:mm dd/MM/yyyy")</div>
+                    </div>
+                    <span class="amp-status amp-status-@Model.CssTrangThai">@Model.TenTrangThai</span>
+                </div>
+
+                <div class="amp-tracker">
+                    @foreach (var (label, css) in Buoc())
+                    {
+                        <div class="step @css">
+                            <div class="dot"><i class="bi @(css == "done" ? "bi-check-lg" : css == "cancelled" ? "bi-x-lg" : "")"></i></div>
+                            <div class="label">@label</div>
+                        </div>
+                    }
+                </div>
+
+                @if (Model.TrangThaiDonHang == TrangThaiDonHang.DaHuy && !string.IsNullOrEmpty(Model.LyDoHuy))
+                {
+                    <div class="amp-alert amp-alert-danger">Lý do hủy: @Model.LyDoHuy</div>
+                }
+
+                <div class="d-flex gap-2 flex-wrap mt-2">
+                    @if (Model.ChoPhepSuaThongTin)
+                    {
+                        <a asp-action="CapNhat" asp-route-id="@Model.Id" class="amp-btn amp-btn-outline amp-btn-sm">Cập nhật thông tin</a>
+                    }
+                    @if (Model.ChoPhepHuy)
+                    {
+                        <button type="button" class="amp-btn amp-btn-danger amp-btn-sm" data-bs-toggle="modal" data-bs-target="#modalHuy">Hủy đơn hàng</button>
+                    }
+                    @if (Model.TrangThaiDonHang == TrangThaiDonHang.DangGiao)
+                    {
+                        <form asp-action="XacNhanDaNhan" method="post">
+                            <input type="hidden" name="id" value="@Model.Id" />
+                            <button type="submit" class="amp-btn amp-btn-primary amp-btn-sm">Đã nhận được hàng</button>
+                        </form>
+                    }
+                </div>
+            </div>
+
+            <div class="amp-card mb-3">
+                <h2 class="amp-heading-sm mb-3">Thông tin nhận hàng</h2>
+                <div class="amp-summary-row"><span>Người nhận</span><span>@Model.TenNguoiNhan</span></div>
+                <div class="amp-summary-row"><span>Điện thoại</span><span>@Model.SoDienThoaiNhan</span></div>
+                <div class="amp-summary-row"><span>Địa chỉ</span><span style="max-width:60%;text-align:right">@Model.DiaChiNhan</span></div>
+                @if (!string.IsNullOrEmpty(Model.GhiChu))
+                {
+                    <div class="amp-summary-row"><span>Ghi chú</span><span>@Model.GhiChu</span></div>
+                }
+                <div class="amp-summary-row"><span>Thanh toán</span><span>@(Model.PhuongThucThanhToan == PhuongThucThanhToan.ThanhToanKhiNhanHang ? "Khi nhận hàng (COD)" : "Chuyển khoản ngân hàng") — @(Model.TrangThaiThanhToan == TrangThaiThanhToan.DaThanhToan ? "Đã thanh toán" : Model.TrangThaiThanhToan == TrangThaiThanhToan.DaHoanTien ? "Đã hoàn tiền" : "Chưa thanh toán")</span></div>
+            </div>
+
+            <div class="amp-card">
+                <h2 class="amp-heading-sm mb-3">Sản phẩm (@Model.ChiTietDonHangs.Count)</h2>
+                @foreach (var ct in Model.ChiTietDonHangs)
+                {
+                    <div class="d-flex gap-3 align-items-center mb-3 pb-3" style="border-bottom:1px solid var(--amp-border)">
+                        <img src="@ct.HinhAnh" class="amp-thumb-sm" style="width:56px;height:68px" />
+                        <div class="flex-grow-1">
+                            <div style="font-weight:600;font-size:13.5px">@ct.TenSanPham</div>
+                            <div style="font-size:12px;color:var(--amp-muted)">@ct.TenMau · @ct.TenKichThuoc · SL: @ct.SoLuong</div>
+                        </div>
+                        <div style="font-weight:700;font-size:13.5px">@ct.ThanhTien.ToString("N0")₫</div>
+                        @if (Model.ChoPhepDanhGia && ct.SanPhamId.HasValue)
+                        {
+                            if (daDanhGia.Contains(ct.SanPhamId.Value))
+                            {
+                                <span class="amp-btn amp-btn-outline amp-btn-sm" style="pointer-events:none;opacity:.5">Đã đánh giá</span>
+                            }
+                            else
+                            {
+                                <button type="button" class="amp-btn amp-btn-outline amp-btn-sm" data-bs-toggle="modal" data-bs-target="#modalDanhGia@(ct.SanPhamId)">Đánh giá</button>
+                            }
+                        }
+                    </div>
+                }
+
+                <div class="amp-summary-row"><span>Tạm tính</span><span>@Model.TamTinh.ToString("N0")₫</span></div>
+                <div class="amp-summary-row"><span>Phí vận chuyển</span><span>@(Model.PhiVanChuyen == 0 ? "Miễn phí" : Model.PhiVanChuyen.ToString("N0") + "₫")</span></div>
+                @if (Model.SoTienGiamGia > 0)
+                {
+                    <div class="amp-summary-row"><span>Giảm giá @(Model.MaGiamGiaApDung != null ? $"({Model.MaGiamGiaApDung.Ma})" : "")</span><span class="neg">-@Model.SoTienGiamGia.ToString("N0")₫</span></div>
+                }
+                <div class="amp-summary-row total"><span>Tổng thanh toán</span><span>@Model.TongTien.ToString("N0")₫</span></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ============ MODAL: HỦY ĐƠN ============ *@
+<div class="modal fade" id="modalHuy" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-controller="DonHang" asp-action="Huy" method="post">
+                <input type="hidden" name="DonHangId" value="@Model.Id" />
+                <div class="modal-header">
+                    <h5 class="modal-title">Hủy đơn hàng</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <label class="amp-label">Lý do hủy đơn</label>
+                    <select name="LyDoHuy" class="form-select" required>
+                        <option value="">— Chọn lý do —</option>
+                        <option>Tôi muốn thay đổi sản phẩm / số lượng</option>
+                        <option>Tôi tìm được giá tốt hơn</option>
+                        <option>Thời gian giao hàng quá lâu</option>
+                        <option>Tôi đặt nhầm</option>
+                        <option>Lý do khác</option>
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="amp-btn amp-btn-outline" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="amp-btn amp-btn-danger">Xác nhận hủy</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@* ============ MODAL: ĐÁNH GIÁ (mỗi sản phẩm 1 modal) ============ *@
+@if (Model.ChoPhepDanhGia)
+{
+    @foreach (var ct in Model.ChiTietDonHangs.Where(c => c.SanPhamId.HasValue && !daDanhGia.Contains(c.SanPhamId!.Value)))
+    {
+        <div class="modal fade" id="modalDanhGia@(ct.SanPhamId)" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form asp-controller="DonHang" asp-action="GuiDanhGia" method="post">
+                        <input type="hidden" name="DonHangId" value="@Model.Id" />
+                        <input type="hidden" name="SanPhamId" value="@ct.SanPhamId" />
+                        <div class="modal-header">
+                            <h5 class="modal-title">Đánh giá: @ct.TenSanPham</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="amp-star-pick" data-star-picker="danhgia@(ct.SanPhamId)">
+                                <input type="hidden" name="SoSao" value="5" data-star-value />
+                                <i class="bi bi-star-fill s on"></i><i class="bi bi-star-fill s on"></i><i class="bi bi-star-fill s on"></i><i class="bi bi-star-fill s on"></i><i class="bi bi-star-fill s on"></i>
+                            </div>
+                            <label class="amp-label">Nhận xét của bạn</label>
+                            <textarea name="NoiDung" class="form-control" rows="3" required placeholder="Chia sẻ cảm nhận của bạn về sản phẩm..."></textarea>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="amp-btn amp-btn-outline" data-bs-dismiss="modal">Đóng</button>
+                            <button type="submit" class="amp-btn amp-btn-primary">Gửi đánh giá</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    }
+}

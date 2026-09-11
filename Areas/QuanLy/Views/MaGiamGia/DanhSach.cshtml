@@ -1,0 +1,49 @@
+@model List<MaGiamGia>
+@{
+    ViewData["Title"] = "Mã giảm giá";
+}
+<div class="amp-table-toolbar">
+    <span class="count" style="font-size:13px;color:var(--amp-muted)">@Model.Count mã giảm giá</span>
+    <a asp-action="Them" class="amp-btn amp-btn-primary"><i class="bi bi-plus-lg me-1"></i>Thêm mã giảm giá</a>
+</div>
+
+<div class="amp-table-card">
+    <table class="amp-table">
+        <thead><tr><th>Mã</th><th>Giá trị</th><th>Đơn tối thiểu</th><th>Đã dùng</th><th>Hiệu lực</th><th>Trạng thái</th><th></th></tr></thead>
+        <tbody>
+            @if (Model.Count == 0)
+            {
+                <tr><td colspan="7" class="text-center text-muted py-4">Chưa có mã giảm giá nào.</td></tr>
+            }
+            @foreach (var m in Model)
+            {
+                <tr>
+                    <td><strong>@m.Ma</strong><div style="font-size:11.5px;color:var(--amp-muted)">@m.MoTa</div></td>
+                    <td>@(m.LoaiGiamGia == LoaiGiamGia.PhanTram ? $"{m.GiaTri:N0}%" : $"{m.GiaTri:N0}đ")</td>
+                    <td>@m.GiaTriDonHangToiThieu.ToString("N0")đ</td>
+                    <td>@m.SoLuongDaDung@(m.SoLuongToiDa.HasValue ? $" / {m.SoLuongToiDa}" : "")</td>
+                    <td style="font-size:12.5px">@m.NgayBatDau.ToString("dd/MM/yy") – @m.NgayKetThuc.ToString("dd/MM/yy")</td>
+                    <td>
+                        @if (m.ConHieuLuc)
+                        {
+                            <span class="amp-status amp-status-da-giao">Đang hiệu lực</span>
+                        }
+                        else
+                        {
+                            <span class="amp-status amp-status-da-huy">@(m.TrangThaiHoatDong ? "Hết hạn/hết lượt" : "Đã tắt")</span>
+                        }
+                    </td>
+                    <td>
+                        <div class="d-flex gap-1">
+                            <a asp-action="Sua" asp-route-id="@m.Id" class="amp-btn amp-btn-outline amp-btn-sm">Sửa</a>
+                            <form asp-action="Xoa" method="post" onsubmit="return confirm('Xóa mã giảm giá này?')">
+                                <input type="hidden" name="id" value="@m.Id" />
+                                <button type="submit" class="amp-btn amp-btn-danger amp-btn-sm">Xóa</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

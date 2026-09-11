@@ -1,0 +1,113 @@
+@model SanPhamDanhSachViewModel
+@{
+    ViewData["Title"] = ViewBag.ChiGiamGia == true ? "Khuyến mãi" : "Sản phẩm";
+    bool chiGiamGia = ViewBag.ChiGiamGia == true;
+
+    string BuildSortUrl(string sapXep) => Url.Action("DanhSach", new {
+        tuKhoa = Model.TuKhoa, danhMucId = Model.DanhMucId, giaTu = Model.GiaTu, giaDen = Model.GiaDen,
+        sapXep, chiGiamGia, trang = 1
+    })!;
+    string BuildPageUrl(int trang) => Url.Action("DanhSach", new {
+        tuKhoa = Model.TuKhoa, danhMucId = Model.DanhMucId, giaTu = Model.GiaTu, giaDen = Model.GiaDen,
+        sapXep = Model.SapXep, chiGiamGia, trang
+    })!;
+}
+
+@if (chiGiamGia)
+{
+    <section class="amp-hero" style="height:320px;background-image:url('https://picsum.photos/seed/amp-sale-2026/1600/700')">
+        <div class="amp-hero-content">
+            <span class="amp-eyebrow">Ưu đãi có hạn</span>
+            <h1>Khuyến mãi đặc biệt</h1>
+        </div>
+    </section>
+}
+
+<div class="amp-container" style="padding:@(chiGiamGia ? "40px" : "50px") 24px 90px">
+    @if (!chiGiamGia)
+    {
+        <div class="amp-page-title">Tất cả sản phẩm</div>
+    }
+
+    <div class="row">
+        <div class="col-lg-3 mb-4">
+            <form method="get" id="filterForm">
+                <input type="hidden" name="sapXep" value="@Model.SapXep" />
+                @if (chiGiamGia) { <input type="hidden" name="chiGiamGia" value="true" /> }
+
+                <div class="amp-filter-block">
+                    <h6>Tìm kiếm</h6>
+                    <input type="text" name="tuKhoa" value="@Model.TuKhoa" class="form-control" placeholder="Tên sản phẩm, thương hiệu..." />
+                </div>
+
+                <div class="amp-filter-block">
+                    <h6>Danh mục</h6>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="danhMucId" value="" id="dm0" onchange="document.getElementById('filterForm').submit()" checked="@(Model.DanhMucId == null)" />
+                        <label class="form-check-label" for="dm0">Tất cả</label>
+                    </div>
+                    @foreach (var dm in Model.DanhMucs)
+                    {
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="danhMucId" value="@dm.Id" id="dm@(dm.Id)" onchange="document.getElementById('filterForm').submit()" checked="@(Model.DanhMucId == dm.Id)" />
+                            <label class="form-check-label" for="dm@(dm.Id)">@dm.TenDanhMuc</label>
+                        </div>
+                    }
+                </div>
+
+                <div class="amp-filter-block">
+                    <h6>Khoảng giá (đ)</h6>
+                    <div class="d-flex gap-2 align-items-center mb-2">
+                        <input type="number" name="giaTu" value="@Model.GiaTu" class="form-control form-control-sm" placeholder="Từ" />
+                        <span>—</span>
+                        <input type="number" name="giaDen" value="@Model.GiaDen" class="form-control form-control-sm" placeholder="Đến" />
+                    </div>
+                    <button type="submit" class="amp-btn amp-btn-outline amp-btn-sm amp-btn-block">Áp dụng</button>
+                </div>
+
+                <a href="@Url.Action("DanhSach", new { chiGiamGia })" class="amp-link" style="font-size:12.5px">Xóa tất cả bộ lọc</a>
+            </form>
+        </div>
+
+        <div class="col-lg-9">
+            <div class="amp-toolbar">
+                <span class="count">@Model.TongSoSanPham sản phẩm</span>
+                <select class="form-select amp-sort-select" onchange="location.href=this.value">
+                    <option value="@BuildSortUrl("moi-nhat")" selected="@(Model.SapXep == "moi-nhat")">Mới nhất</option>
+                    <option value="@BuildSortUrl("ban-chay")" selected="@(Model.SapXep == "ban-chay")">Bán chạy nhất</option>
+                    <option value="@BuildSortUrl("gia-tang")" selected="@(Model.SapXep == "gia-tang")">Giá: Thấp đến cao</option>
+                    <option value="@BuildSortUrl("gia-giam")" selected="@(Model.SapXep == "gia-giam")">Giá: Cao đến thấp</option>
+                </select>
+            </div>
+
+            @if (Model.SanPhams.Count == 0)
+            {
+                <div class="amp-empty">
+                    <i class="bi bi-bag-x"></i>
+                    <p>Không tìm thấy sản phẩm phù hợp.</p>
+                </div>
+            }
+            else
+            {
+                <div class="amp-product-grid">
+                    @foreach (var sp in Model.SanPhams)
+                    {
+                        <partial name="_ProductCard" model="sp" />
+                    }
+                </div>
+
+                @if (Model.TongSoTrang > 1)
+                {
+                    <div class="amp-pagination">
+                        <a href="@BuildPageUrl(Math.Max(1, Model.TrangHienTai - 1))" class="@(Model.TrangHienTai == 1 ? "disabled" : "")"><i class="bi bi-chevron-left"></i></a>
+                        @for (int i = 1; i <= Model.TongSoTrang; i++)
+                        {
+                            <a href="@BuildPageUrl(i)" class="@(i == Model.TrangHienTai ? "active" : "")">@i</a>
+                        }
+                        <a href="@BuildPageUrl(Math.Min(Model.TongSoTrang, Model.TrangHienTai + 1))" class="@(Model.TrangHienTai == Model.TongSoTrang ? "disabled" : "")"><i class="bi bi-chevron-right"></i></a>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</div>

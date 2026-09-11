@@ -1,0 +1,37 @@
+@using AMPFashionStore.Data
+@inject ApplicationDbContext Db
+@{
+    var uid = User.GetUserId();
+    var nguoiDung = await Db.NguoiDungs.FindAsync(uid);
+    var current = ViewBag.SidebarActive as string ?? "";
+    string ChuCaiDau(string? ten) => string.IsNullOrWhiteSpace(ten) ? "?" : ten.Trim()[0].ToString().ToUpper();
+}
+<aside class="amp-account-side">
+    @if (!string.IsNullOrEmpty(nguoiDung?.AnhDaiDien))
+    {
+        <img src="@nguoiDung.AnhDaiDien" class="amp-avatar" alt="avatar" />
+    }
+    else
+    {
+        <div class="amp-avatar">@ChuCaiDau(nguoiDung?.HoTen)</div>
+    }
+    <h6>@nguoiDung?.HoTen</h6>
+    <div class="email">@nguoiDung?.Email</div>
+    <nav class="amp-account-nav">
+        <a asp-controller="TaiKhoan" asp-action="ThongTinCaNhan" class="@(current == "info" ? "active" : "")">
+            <span><i class="bi bi-person me-2"></i>Thông tin cá nhân</span>
+        </a>
+        <a asp-controller="DonHang" asp-action="DanhSach" class="@(current == "orders" ? "active" : "")">
+            <span><i class="bi bi-bag-check me-2"></i>Đơn hàng của tôi</span>
+        </a>
+        <a asp-controller="YeuThich" asp-action="Index" class="@(current == "wishlist" ? "active" : "")">
+            <span><i class="bi bi-heart me-2"></i>Yêu thích</span>
+        </a>
+        <a asp-controller="TaiKhoan" asp-action="DoiMatKhau" class="@(current == "password" ? "active" : "")">
+            <span><i class="bi bi-key me-2"></i>Đổi mật khẩu</span>
+        </a>
+        <form asp-controller="TaiKhoan" asp-action="DangXuat" method="post">
+            <button type="submit" class="logout"><i class="bi bi-box-arrow-right me-2"></i>Đăng xuất</button>
+        </form>
+    </nav>
+</aside>

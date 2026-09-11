@@ -1,0 +1,42 @@
+@model DoiMatKhauViewModel
+@{
+    ViewData["Title"] = "Đổi mật khẩu";
+    ViewBag.SidebarActive = "password";
+}
+<div class="amp-container" style="padding:40px 24px 90px">
+    <div class="amp-page-title">Đổi mật khẩu</div>
+    <div class="amp-account-wrap">
+        <partial name="_TaiKhoanSidebar" />
+
+        <div class="amp-card" style="max-width:520px">
+            <h2 class="amp-heading-md mb-4">Cập nhật mật khẩu</h2>
+
+            <div asp-validation-summary="ModelOnly" class="validation-summary-errors"></div>
+
+            <form asp-action="DoiMatKhau" method="post">
+                <div class="amp-field">
+                    <label asp-for="MatKhauCu" class="amp-label"></label>
+                    <input asp-for="MatKhauCu" class="form-control" />
+                    <span asp-validation-for="MatKhauCu" class="text-danger"></span>
+                </div>
+                <div class="amp-field">
+                    <label asp-for="MatKhauMoi" class="amp-label"></label>
+                    <input asp-for="MatKhauMoi" class="form-control" data-pwd-strength />
+                    <div class="amp-strength" data-strength-bar><span></span></div>
+                    <div class="amp-strength-hint" data-strength-hint></div>
+                    <span asp-validation-for="MatKhauMoi" class="text-danger"></span>
+                </div>
+                <div class="amp-field">
+                    <label asp-for="XacNhanMatKhauMoi" class="amp-label"></label>
+                    <input asp-for="XacNhanMatKhauMoi" class="form-control" />
+                    <span asp-validation-for="XacNhanMatKhauMoi" class="text-danger"></span>
+                </div>
+                <button type="submit" class="amp-btn amp-btn-primary">Cập nhật</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

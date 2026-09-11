@@ -1,0 +1,55 @@
+@model DangKyViewModel
+@{
+    ViewData["Title"] = "Đăng ký";
+}
+<div class="amp-auth-wrap">
+    <div class="amp-auth-card">
+        <h1>Đăng ký</h1>
+        <p class="amp-sub">Tạo tài khoản mới</p>
+
+        <div asp-validation-summary="ModelOnly" class="validation-summary-errors"></div>
+
+        <form asp-action="DangKy" method="post">
+            <div class="amp-field">
+                <label asp-for="HoTen" class="amp-label"></label>
+                <input asp-for="HoTen" class="form-control" placeholder="Nhập họ và tên của bạn" autofocus />
+                <span asp-validation-for="HoTen" class="text-danger"></span>
+            </div>
+            <div class="amp-field">
+                <label asp-for="Email" class="amp-label"></label>
+                <input asp-for="Email" class="form-control" placeholder="Nhập địa chỉ email" />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+            <div class="amp-field">
+                <label asp-for="SoDienThoai" class="amp-label"></label>
+                <input asp-for="SoDienThoai" class="form-control" placeholder="Nhập số điện thoại" />
+                <span asp-validation-for="SoDienThoai" class="text-danger"></span>
+            </div>
+            <div class="amp-field">
+                <label asp-for="MatKhau" class="amp-label"></label>
+                <input asp-for="MatKhau" class="form-control" placeholder="Tối thiểu 6 ký tự" data-pwd-strength />
+                <div class="amp-strength" data-strength-bar><span></span></div>
+                <div class="amp-strength-hint" data-strength-hint></div>
+                <span asp-validation-for="MatKhau" class="text-danger"></span>
+            </div>
+            <div class="amp-field">
+                <label asp-for="XacNhanMatKhau" class="amp-label"></label>
+                <input asp-for="XacNhanMatKhau" class="form-control" placeholder="Nhập lại mật khẩu" />
+                <span asp-validation-for="XacNhanMatKhau" class="text-danger"></span>
+            </div>
+            <div class="form-check mb-3">
+                <input type="checkbox" class="form-check-input" id="dongY" required />
+                <label class="form-check-label" for="dongY" style="font-size:13px">
+                    Tôi đồng ý với <a href="#" class="amp-link">Điều khoản dịch vụ</a> và <a href="#" class="amp-link">Chính sách bảo mật</a> của AMP.
+                </label>
+            </div>
+            <button type="submit" class="amp-btn amp-btn-primary amp-btn-block">Đăng ký</button>
+        </form>
+
+        <p class="amp-auth-foot">Đã có tài khoản? <a asp-action="DangNhap" class="amp-link">Đăng nhập</a></p>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,59 @@
+@model LienHe
+@{
+    ViewData["Title"] = "Liên hệ";
+}
+<div class="amp-container" style="padding:50px 24px 90px">
+    <div class="amp-section-title">
+        <h2>Liên hệ với chúng tôi</h2>
+        <p>Có câu hỏi hoặc góp ý? AMP luôn sẵn sàng lắng nghe bạn.</p>
+    </div>
+
+    <div class="row g-4 justify-content-center">
+        <div class="col-lg-4">
+            <div class="amp-surface-card h-100">
+                <h5 class="amp-heading-sm mb-3">Thông tin liên hệ</h5>
+                <p style="font-size:13.5px;color:var(--amp-ink-soft);margin-bottom:16px"><i class="bi bi-geo-alt me-2"></i>128 Nguyễn Trãi, Phường Bến Thành, Quận 1, TP. Hồ Chí Minh</p>
+                <p style="font-size:13.5px;color:var(--amp-ink-soft);margin-bottom:16px"><i class="bi bi-telephone me-2"></i>Hotline: 1900 6006</p>
+                <p style="font-size:13.5px;color:var(--amp-ink-soft);margin-bottom:16px"><i class="bi bi-envelope me-2"></i>support@ampfashion.vn</p>
+                <p style="font-size:13.5px;color:var(--amp-ink-soft)"><i class="bi bi-clock me-2"></i>8:00 – 21:00 (Thứ 2 – Chủ nhật)</p>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="amp-card">
+                <div asp-validation-summary="ModelOnly" class="validation-summary-errors"></div>
+                <form asp-action="Index" method="post">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="amp-field">
+                                <label asp-for="HoTen" class="amp-label"></label>
+                                <input asp-for="HoTen" class="form-control" />
+                                <span asp-validation-for="HoTen" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="amp-field">
+                                <label asp-for="Email" class="amp-label"></label>
+                                <input asp-for="Email" class="form-control" />
+                                <span asp-validation-for="Email" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="amp-field">
+                        <label asp-for="SoDienThoai" class="amp-label"><span class="opt">(tùy chọn)</span></label>
+                        <input asp-for="SoDienThoai" class="form-control" />
+                    </div>
+                    <div class="amp-field">
+                        <label asp-for="NoiDung" class="amp-label"></label>
+                        <textarea asp-for="NoiDung" class="form-control" rows="5" placeholder="Nội dung bạn muốn gửi đến AMP..."></textarea>
+                        <span asp-validation-for="NoiDung" class="text-danger"></span>
+                    </div>
+                    <button type="submit" class="amp-btn amp-btn-primary">Gửi liên hệ</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

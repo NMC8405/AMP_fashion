@@ -1,0 +1,61 @@
+@{
+    ViewData["Title"] = "Màu sắc & Kích thước";
+    var mauSacs = ViewBag.MauSacs as List<MauSac> ?? new();
+    var kichThuocs = ViewBag.KichThuocs as List<KichThuoc> ?? new();
+}
+<div class="row g-3">
+    <div class="col-lg-6">
+        <div class="amp-table-card" style="padding:22px">
+            <h6 class="amp-heading-sm mb-3">Màu sắc</h6>
+            <form asp-action="ThemMau" method="post" class="d-flex gap-2 mb-3">
+                <input type="color" name="maHex" value="#000000" style="width:44px;height:44px;padding:2px;border:1px solid var(--amp-border-strong);border-radius:3px" />
+                <input type="text" name="tenMau" class="form-control" placeholder="Tên màu (vd: Xanh Navy)" required />
+                <button type="submit" class="amp-btn amp-btn-primary amp-btn-sm" style="flex-shrink:0">Thêm</button>
+            </form>
+            <table class="amp-table">
+                <tbody>
+                    @foreach (var m in mauSacs)
+                    {
+                        <tr>
+                            <td style="width:30px"><span class="amp-swatch" style="background:@m.MaHex"></span></td>
+                            <td>@m.TenMau</td>
+                            <td style="width:60px">
+                                <form asp-action="XoaMau" method="post" onsubmit="return confirm('Xóa màu này?')">
+                                    <input type="hidden" name="id" value="@m.Id" />
+                                    <button type="submit" class="amp-btn amp-btn-danger amp-btn-sm">Xóa</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="amp-table-card" style="padding:22px">
+            <h6 class="amp-heading-sm mb-3">Kích thước</h6>
+            <form asp-action="ThemKichThuoc" method="post" class="d-flex gap-2 mb-3">
+                <input type="text" name="tenKichThuoc" class="form-control" placeholder="Tên (vd: XL)" required />
+                <input type="number" name="thuTu" class="form-control" placeholder="Thứ tự" style="width:100px" value="@(kichThuocs.Count + 1)" />
+                <button type="submit" class="amp-btn amp-btn-primary amp-btn-sm" style="flex-shrink:0">Thêm</button>
+            </form>
+            <table class="amp-table">
+                <tbody>
+                    @foreach (var k in kichThuocs)
+                    {
+                        <tr>
+                            <td>@k.TenKichThuoc</td>
+                            <td style="width:60px">
+                                <form asp-action="XoaKichThuoc" method="post" onsubmit="return confirm('Xóa kích thước này?')">
+                                    <input type="hidden" name="id" value="@k.Id" />
+                                    <button type="submit" class="amp-btn amp-btn-danger amp-btn-sm">Xóa</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

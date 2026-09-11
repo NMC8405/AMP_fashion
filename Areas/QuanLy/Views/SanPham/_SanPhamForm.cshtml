@@ -1,0 +1,120 @@
+@model SanPhamFormViewModel
+@{
+    string GetSoLuong(int mauId, int sizeId)
+    {
+        var bt = Model.BienThes.FirstOrDefault(b => b.MauSacId == mauId && b.KichThuocId == sizeId);
+        return bt?.SoLuongTon.ToString() ?? "0";
+    }
+}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="amp-table-card mb-3" style="padding:24px">
+            <h6 class="amp-heading-sm mb-3">Thông tin cơ bản</h6>
+            <div class="amp-field">
+                <label asp-for="SanPham.TenSanPham" class="amp-label"></label>
+                <input asp-for="SanPham.TenSanPham" class="form-control" />
+                <span asp-validation-for="SanPham.TenSanPham" class="text-danger"></span>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="amp-field">
+                        <label asp-for="SanPham.DanhMucId" class="amp-label"></label>
+                        <select asp-for="SanPham.DanhMucId" class="form-select" asp-items="@(new SelectList(Model.DanhMucs, "Id", "TenDanhMuc"))">
+                            <option value="">— Chọn danh mục —</option>
+                        </select>
+                        <span asp-validation-for="SanPham.DanhMucId" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="amp-field">
+                        <label asp-for="SanPham.ThuongHieu" class="amp-label"><span class="opt">(tùy chọn)</span></label>
+                        <input asp-for="SanPham.ThuongHieu" class="form-control" />
+                    </div>
+                </div>
+            </div>
+            <div class="amp-field">
+                <label asp-for="SanPham.MoTa" class="amp-label"><span class="opt">(tùy chọn)</span></label>
+                <textarea asp-for="SanPham.MoTa" class="form-control" rows="4"></textarea>
+            </div>
+        </div>
+
+        <div class="amp-table-card mb-3" style="padding:24px">
+            <h6 class="amp-heading-sm mb-3">Giá bán</h6>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="amp-field">
+                        <label asp-for="SanPham.GiaGoc" class="amp-label"></label>
+                        <input asp-for="SanPham.GiaGoc" class="form-control" type="number" />
+                        <span asp-validation-for="SanPham.GiaGoc" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="amp-field">
+                        <label asp-for="SanPham.GiaKhuyenMai" class="amp-label"><span class="opt">(để trống nếu không giảm giá)</span></label>
+                        <input asp-for="SanPham.GiaKhuyenMai" class="form-control" type="number" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="amp-table-card" style="padding:24px">
+            <h6 class="amp-heading-sm mb-1">Kho hàng theo màu &amp; kích thước</h6>
+            <p style="font-size:12.5px;color:var(--amp-muted);margin-bottom:14px">Nhập số lượng tồn cho từng biến thể. Để 0 nghĩa là không cung cấp biến thể đó.</p>
+            @if (Model.TatCaMauSac.Count == 0 || Model.TatCaKichThuoc.Count == 0)
+            {
+                <div class="amp-alert amp-alert-info mb-0">Chưa có dữ liệu màu sắc / kích thước. Vui lòng <a asp-area="QuanLy" asp-controller="ThuocTinh" asp-action="DanhSach" class="amp-link">thêm màu sắc &amp; kích thước</a> trước.</div>
+            }
+            else
+            {
+                <div style="overflow-x:auto">
+                    <table class="amp-variant-matrix">
+                        <thead>
+                            <tr>
+                                <th>Màu \ Size</th>
+                                @foreach (var size in Model.TatCaKichThuoc)
+                                {
+                                    <th>@size.TenKichThuoc</th>
+                                }
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var mau in Model.TatCaMauSac)
+                            {
+                                <tr>
+                                    <td style="text-align:left;white-space:nowrap"><span class="amp-swatch" style="background:@mau.MaHex"></span>@mau.TenMau</td>
+                                    @foreach (var size in Model.TatCaKichThuoc)
+                                    {
+                                        <td><input type="number" min="0" name="soLuong_@(mau.Id)_@(size.Id)" value="@GetSoLuong(mau.Id, size.Id)" /></td>
+                                    }
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="amp-table-card mb-3" style="padding:24px">
+            <h6 class="amp-heading-sm mb-3">Hình ảnh</h6>
+            <div class="amp-field">
+                <label asp-for="SanPham.HinhAnhChinh" class="amp-label"></label>
+                <input asp-for="SanPham.HinhAnhChinh" class="form-control" placeholder="https://..." />
+                <span asp-validation-for="SanPham.HinhAnhChinh" class="text-danger"></span>
+            </div>
+            <div class="amp-field">
+                <label class="amp-label">Ảnh phụ <span class="opt">(mỗi dòng 1 link)</span></label>
+                <textarea asp-for="DuongDanAnhPhu" class="form-control" rows="4" placeholder="https://...&#10;https://..."></textarea>
+            </div>
+        </div>
+
+        <div class="amp-table-card" style="padding:24px">
+            <h6 class="amp-heading-sm mb-3">Hiển thị</h6>
+            <div class="form-check form-switch">
+                <input asp-for="SanPham.TrangThaiHienThi" class="form-check-input" type="checkbox" role="switch" />
+                <label asp-for="SanPham.TrangThaiHienThi" class="form-check-label">Hiển thị sản phẩm trên cửa hàng</label>
+            </div>
+        </div>
+    </div>
+</div>
