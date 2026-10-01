@@ -363,4 +363,25 @@
   function escapeHtml(str) {
     return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   }
+
+  // Khắc phục xử lý checkbox cho jQuery Validate Unobtrusive
+  if (window.jQuery && jQuery.validator) {
+    jQuery.validator.addMethod("mustbetrue", function (value, element) {
+      return element.checked;
+    }, "Vui lòng chọn chấp nhận Điều khoản dịch vụ và Chính sách bảo mật.");
+
+    if (jQuery.validator.unobtrusive) {
+      jQuery.validator.unobtrusive.adapters.addBool("mustbetrue");
+    }
+
+    var origRange = jQuery.validator.methods.range;
+    if (origRange) {
+      jQuery.validator.methods.range = function (value, element, param) {
+        if (element.type === "checkbox") {
+          return element.checked;
+        }
+        return origRange.call(this, value, element, param);
+      };
+    }
+  }
 })();

@@ -33,9 +33,26 @@ namespace AMPFashionStore.ViewModels
         [Compare("MatKhau", ErrorMessage = "Mật khẩu xác nhận không khớp")]
         public string XacNhanMatKhau { get; set; } = string.Empty;
 
-        [Range(typeof(bool), "true", "true", ErrorMessage = "Vui lòng chọn chấp nhận Điều khoản dịch vụ và Chính sách bảo mật.")]
+        [MustBeTrue(ErrorMessage = "Vui lòng chọn chấp nhận Điều khoản dịch vụ và Chính sách bảo mật.")]
         [Display(Name = "Điều khoản dịch vụ")]
         public bool DongYDieuKhoan { get; set; }
+    }
+
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
+    public class MustBeTrueAttribute : ValidationAttribute, Microsoft.AspNetCore.Mvc.ModelBinding.Validation.IClientModelValidator
+    {
+        public MustBeTrueAttribute() : base("Vui lòng chọn chấp nhận Điều khoản dịch vụ và Chính sách bảo mật.") { }
+
+        public override bool IsValid(object? value)
+        {
+            return value is bool b && b;
+        }
+
+        public void AddValidation(Microsoft.AspNetCore.Mvc.ModelBinding.Validation.ClientModelValidationContext context)
+        {
+            context.Attributes["data-val"] = "true";
+            context.Attributes["data-val-mustbetrue"] = ErrorMessageString;
+        }
     }
 
     /// <summary>Dữ liệu đăng ký tạm lưu trong Session trong lúc chờ xác thực OTP.</summary>

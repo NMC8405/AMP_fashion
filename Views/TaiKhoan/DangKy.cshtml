@@ -55,4 +55,33 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function ($) {
+            if ($ && $.validator) {
+                $.validator.addMethod("mustbetrue", function (value, element) {
+                    return element.checked;
+                }, "Vui lòng chọn chấp nhận Điều khoản dịch vụ và Chính sách bảo mật.");
+
+                if ($.validator.unobtrusive) {
+                    $.validator.unobtrusive.adapters.addBool("mustbetrue");
+                }
+
+                // Đảm bảo method range nếu có gán cho checkbox thì kiểm tra checked
+                var origRange = $.validator.methods.range;
+                $.validator.methods.range = function (value, element, param) {
+                    if (element.type === "checkbox") {
+                        return element.checked;
+                    }
+                    return origRange.call(this, value, element, param);
+                };
+
+                // Khi tick chọn checkbox, xóa thông báo lỗi ngay lập tức
+                $(document).on("change", "#dongY", function () {
+                    if (this.checked) {
+                        $(this).closest("form").validate().element(this);
+                    }
+                });
+            }
+        })(jQuery);
+    </script>
 }
