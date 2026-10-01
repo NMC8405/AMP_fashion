@@ -149,5 +149,69 @@ namespace AMPFashionStore.Controllers
             await _db.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
+
+        // ================= Xóa các sản phẩm đã chọn khỏi giỏ hàng =================
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> XoaCacSanPham(List<int> selectedItemIds)
+        {
+            var userId = User.GetUserId();
+            if (selectedItemIds != null && selectedItemIds.Count > 0)
+            {
+                var items = await _db.GioHangItems
+                    .Where(g => g.NguoiDungId == userId && selectedItemIds.Contains(g.Id))
+                    .ToListAsync();
+                if (items.Count > 0)
+                {
+                    _db.GioHangItems.RemoveRange(items);
+                    await _db.SaveChangesAsync();
+                    TempData["ThongBao"] = $"Đã xóa {items.Count} sản phẩm được chọn khỏi giỏ hàng.";
+                }
+            }
+            return RedirectToAction(nameof(Index));
+        }
+
+        // ================= Kiểm tra mã giảm giá trực tiếp trên giỏ hàng =================
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> KiemTraVoucher(string ma, decimal tamTinh)
+        {
+            if (string.IsNullOrWhiteSpace(ma))
+                return Json(new { hopLe = false, thongBao = "Vui lòng nhập mã giảm giá." });
+
+            var maSach = ma.Trim().ToUpper();
+            var maGiamGia = await _db.MaGiamGias.FirstOrDefaultAsync(m => m.Ma.ToUpper() == maSach);
+
+            if (maGiamGia == null)
+                return Json(new { hopLe = false, thongBao = "Mã giảm giá không tồn tại." });
+
+            if (!maGiamGia.ConHieuLuc)
+                return Json(new { hopLe = false, thongBao = "Mã giảm giá đã hết hạn hoặc đã sử dụng hết lượt." });
+
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                var userId = User.GetUserId();
+                var daDung = await _db.DonHangs.AnyAsync(d => d.NguoiDungId == userId && d.MaGiamGiaId == maGiamGia.Id && d.TrangThaiDonHang != TrangThaiDonHang.DaHuy);
+                if (daDung)
+                    return Json(new { hopLe = false, thongBao = "Bạn đã sử dụng mã giảm giá này cho một đơn hàng trước đó. Mỗi tài khoản chỉ được sử dụng một lần." });
+            }
+
+            if (tamTinh < maGiamGia.GiaTriDonHangToiThieu)
+                return Json(new { hopLe = false, thongBao = $"Đơn hàng cần tối thiểu {maGiamGia.GiaTriDonHangToiThieu:N0}₫ để áp dụng mã này." });
+
+            var soTienGiam = maGiamGia.TinhSoTienGiam(tamTinh);
+            var moTaGiam = maGiamGia.LoaiGiamGia == LoaiGiamGia.PhanTram
+                ? $"Đã giảm -{maGiamGia.GiaTri:N0}%" + (maGiamGia.SoTienGiamToiDa.HasValue ? $" (tối đa {maGiamGia.SoTienGiamToiDa.Value:N0}₫)" : "")
+                : $"Đã giảm -{maGiamGia.GiaTri:N0}₫";
+
+            return Json(new
+            {
+                hopLe = true,
+                thongBao = "Áp dụng mã giảm giá thành công!",
+                soTienGiam,
+                moTa = moTaGiam,
+                ma = maGiamGia.Ma
+            });
+        }
     }
 }

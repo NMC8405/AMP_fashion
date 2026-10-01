@@ -1,8 +1,18 @@
 @model AMPFashionStore.Models.SanPham
+@inject AMPFashionStore.Data.ApplicationDbContext Db
+@using AMPFashionStore.Services
 @{
-    var yeuThichIds = ViewBag.YeuThichIds as HashSet<int> ?? new HashSet<int>();
+    var yeuThichIds = ViewBag.YeuThichIds as HashSet<int>;
+    if (yeuThichIds == null && User.Identity?.IsAuthenticated == true)
+    {
+        var uid = User.GetUserId();
+        yeuThichIds = Db.YeuThichs.Where(y => y.NguoiDungId == uid).Select(y => y.SanPhamId).ToHashSet();
+        ViewBag.YeuThichIds = yeuThichIds;
+    }
+    yeuThichIds ??= new HashSet<int>();
     var daYeuThich = yeuThichIds.Contains(Model.Id);
     var conHang = Model.BienThes != null && Model.BienThes.Count > 0 ? Model.TongSoLuongTon > 0 : true;
+    var currentUrl = Context.Request.Path + Context.Request.QueryString;
 }
 <div class="amp-product-card">
     <div class="amp-product-thumb">
@@ -16,10 +26,10 @@
         }
         @if (User.Identity?.IsAuthenticated == true)
         {
-            <form asp-controller="YeuThich" asp-action="@(daYeuThich ? "Xoa" : "Them")" method="post">
+            <form asp-controller="YeuThich" asp-action="@(daYeuThich ? "Xoa" : "Them")" method="post" class="amp-wish-form">
                 <input type="hidden" name="sanPhamId" value="@Model.Id" />
-                <input type="hidden" name="veTrang" value="danh-sach" />
-                <button type="submit" class="amp-wish-btn @(daYeuThich ? "active" : "")" title="Yêu thích">
+                <input type="hidden" name="returnUrl" value="@currentUrl" />
+                <button type="submit" class="amp-wish-btn @(daYeuThich ? "active" : "")" title="@(daYeuThich ? "Bỏ yêu thích" : "Yêu thích")" data-wish-id="@Model.Id">
                     <i class="bi @(daYeuThich ? "bi-heart-fill" : "bi-heart")"></i>
                 </button>
             </form>

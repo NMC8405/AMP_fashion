@@ -58,9 +58,9 @@
                 <div class="amp-filter-block">
                     <h6>Khoảng giá (đ)</h6>
                     <div class="d-flex gap-2 align-items-center mb-2">
-                        <input type="number" name="giaTu" value="@Model.GiaTu" class="form-control form-control-sm" placeholder="Từ" />
+                        <input type="number" name="giaTu" value="@Model.GiaTu" min="0" max="100000000" class="form-control form-control-sm" placeholder="Từ 0đ" />
                         <span>—</span>
-                        <input type="number" name="giaDen" value="@Model.GiaDen" class="form-control form-control-sm" placeholder="Đến" />
+                        <input type="number" name="giaDen" value="@Model.GiaDen" min="0" max="100000000" class="form-control form-control-sm" placeholder="Đến 100tr" />
                     </div>
                     <button type="submit" class="amp-btn amp-btn-outline amp-btn-sm amp-btn-block">Áp dụng</button>
                 </div>

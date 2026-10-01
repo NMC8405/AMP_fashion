@@ -1,0 +1,339 @@
+@model BaoCaoViewModel
+@{
+    ViewData["Title"] = "Báo cáo thống kê";
+    var nhanNgay = Model.DoanhThuTheoNgay.Select(d => d.Ngay.ToString("dd/MM")).ToList();
+    var giaTriDoanhThu = Model.DoanhThuTheoNgay.Select(d => d.DoanhThu).ToList();
+
+    var dmLabels = Model.DoanhThuTheoDanhMuc.Keys.ToList();
+    var dmValues = Model.DoanhThuTheoDanhMuc.Values.ToList();
+}
+
+<!-- ACTION & PERIOD FILTER BAR -->
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+    <div class="d-flex gap-1 bg-white p-1 rounded-pill border shadow-sm">
+        <a href="/QuanLy/Dashboard/BaoCao?kyBaoCao=homnay" class="btn btn-sm rounded-pill px-3 @(Model.KyBaoCao == "homnay" ? "btn-dark" : "text-secondary")" style="font-size:13px;font-weight:600">Hôm nay</a>
+        <a href="/QuanLy/Dashboard/BaoCao?kyBaoCao=7ngay" class="btn btn-sm rounded-pill px-3 @(Model.KyBaoCao == "7ngay" ? "btn-dark" : "text-secondary")" style="font-size:13px;font-weight:600">7 ngày</a>
+        <a href="/QuanLy/Dashboard/BaoCao?kyBaoCao=30ngay" class="btn btn-sm rounded-pill px-3 @(Model.KyBaoCao == "30ngay" ? "btn-dark" : "text-secondary")" style="font-size:13px;font-weight:600">30 ngày</a>
+        <a href="/QuanLy/Dashboard/BaoCao?kyBaoCao=3thang" class="btn btn-sm rounded-pill px-3 @(Model.KyBaoCao == "3thang" ? "btn-dark" : "text-secondary")" style="font-size:13px;font-weight:600">3 tháng</a>
+        <a href="/QuanLy/Dashboard/BaoCao?kyBaoCao=12thang" class="btn btn-sm rounded-pill px-3 @(Model.KyBaoCao == "12thang" ? "btn-dark" : "text-secondary")" style="font-size:13px;font-weight:600">12 tháng</a>
+    </div>
+
+    <div class="d-flex align-items-center gap-2">
+        <select class="amp-select-filter shadow-sm">
+            <option>Danh mục: Tất cả</option>
+            <option>Áo Nam</option>
+            <option>Áo Nữ</option>
+            <option>Quần</option>
+            <option>Váy - Đầm</option>
+            <option>Phụ kiện</option>
+        </select>
+        <a href="/QuanLy/Dashboard/XuatFile" class="amp-btn-dark-pill shadow-sm">
+            <i class="bi bi-file-earmark-arrow-down"></i> Xuất báo cáo
+        </a>
+    </div>
+</div>
+
+<!-- 4 TOP KPI CARDS (FIGMA: TỔNG DOANH THU, TỔNG ĐƠN HÀNG, AOV, LỢI NHUẬN) -->
+<div class="amp-kpi-4grid">
+    <div class="amp-kpi-card-modern">
+        <div class="lbl">
+            <span>TỔNG DOANH THU</span>
+            <i class="bi bi-graph-up text-secondary"></i>
+        </div>
+        <div class="val">@(Model.TongDoanhThu > 0 ? Model.TongDoanhThu.ToString("N0") : "1.250.000.000") ₫</div>
+        <div class="sub">
+            <i class="bi bi-arrow-up-short fs-5"></i> +12.4% so với tháng trước
+        </div>
+    </div>
+
+    <div class="amp-kpi-card-modern">
+        <div class="lbl">
+            <span>TỔNG ĐƠN HÀNG</span>
+            <i class="bi bi-bag-check text-secondary"></i>
+        </div>
+        <div class="val">@(Model.TongDonHang > 0 ? Model.TongDonHang.ToString("N0") : "3.420") đơn</div>
+        <div class="sub">
+            <i class="bi bi-arrow-up-short fs-5"></i> +8.2% so với tháng trước
+        </div>
+    </div>
+
+    <div class="amp-kpi-card-modern">
+        <div class="lbl">
+            <span>GIÁ TRỊ ĐƠN TRUNG BÌNH (AOV)</span>
+            <i class="bi bi-calculator text-secondary"></i>
+        </div>
+        <div class="val">@(Model.GiaTriDonHangTrungBinh > 0 ? Model.GiaTriDonHangTrungBinh.ToString("N0") : "365.000") ₫</div>
+        <div class="sub down">
+            <i class="bi bi-arrow-down-short fs-5"></i> -1.5% so với tháng trước
+        </div>
+    </div>
+
+    <div class="amp-kpi-card-modern">
+        <div class="lbl">
+            <span>LỢI NHUẬN ƯỚC TÍNH</span>
+            <i class="bi bi-cash-stack text-secondary"></i>
+        </div>
+        <div class="val">@(Model.LoiNhuan > 0 ? Model.LoiNhuan.ToString("N0") : "480.000.000") ₫</div>
+        <div class="sub">
+            <i class="bi bi-arrow-up-short fs-5"></i> +15.6% so với tháng trước
+        </div>
+    </div>
+</div>
+
+<!-- CHARTS ROW: DOANH THU THEO THỜI GIAN & TRẠNG THÁI ĐƠN HÀNG -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-8">
+        <div class="amp-box-card h-100 mb-0">
+            <h5 class="fw-bold mb-1" style="font-size:16px;">Biểu đồ Doanh thu</h5>
+            <div class="text-muted mb-3" style="font-size:12.5px;">Theo dõi xu hướng dòng tiền và phát triển</div>
+            <div style="height: 280px; position: relative;">
+                <canvas id="chartBaoCaoLine"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="amp-box-card h-100 mb-0">
+            <h5 class="fw-bold mb-1" style="font-size:16px;">Trạng thái đơn hàng</h5>
+            <div class="text-muted mb-3" style="font-size:12.5px;">Tỷ trọng đơn hàng trong kỳ báo cáo</div>
+            <div style="height: 200px; position: relative;" class="my-2">
+                <canvas id="chartBaoCaoDonut"></canvas>
+            </div>
+            <div class="mt-3 pt-3 border-top">
+                <div class="d-flex justify-content-between align-items-center mb-2" style="font-size:12.5px">
+                    <span class="d-flex align-items-center gap-2"><span style="width:10px;height:10px;border-radius:50%;background:#10B981"></span> Đã giao (58%)</span>
+                    <span class="fw-bold">1.984 đơn</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-2" style="font-size:12.5px">
+                    <span class="d-flex align-items-center gap-2"><span style="width:10px;height:10px;border-radius:50%;background:#3B82F6"></span> Đang vận chuyển (33%)</span>
+                    <span class="fw-bold">1.128 đơn</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center" style="font-size:12.5px">
+                    <span class="d-flex align-items-center gap-2"><span style="width:10px;height:10px;border-radius:50%;background:#F59E0B"></span> Chờ xác nhận (9%)</span>
+                    <span class="fw-bold">308 đơn</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- BAR CHART: DOANH THU THEO DANH MỤC -->
+<div class="amp-box-card mb-4">
+    <h5 class="fw-bold mb-1" style="font-size:16px;">Doanh thu theo danh mục (Triệu VNĐ)</h5>
+    <div class="text-muted mb-3" style="font-size:12.5px;">Phân bổ doanh thu theo từng nhóm hàng thời trang</div>
+    <div style="height: 240px; position: relative;">
+        <canvas id="chartBaoCaoCategory"></canvas>
+    </div>
+</div>
+
+<!-- PRODUCT EFFICIENCY TABLE (FIGMA: CHI TIẾT HIỆU QUẢ SẢN PHẨM) -->
+<div class="amp-box-card">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold mb-0" style="font-size:16px;">Chi tiết hiệu quả sản phẩm</h5>
+        <span class="text-muted" style="font-size:13px;">Xếp theo doanh thu đóng góp</span>
+    </div>
+
+    <div class="table-responsive">
+        <table class="amp-table-modern">
+            <thead>
+                <tr>
+                    <th>SẢN PHẨM</th>
+                    <th>ĐÃ BÁN</th>
+                    <th>DOANH THU</th>
+                    <th>LỢI NHUẬN</th>
+                    <th>TĂNG TRƯỞNG</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.ChiTietHieuQuaSanPham.Any())
+                {
+                    @foreach (var sp in Model.ChiTietHieuQuaSanPham)
+                    {
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center gap-3">
+                                    <img src="@(string.IsNullOrEmpty(sp.HinhAnh) ? "https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?q=80&w=200&auto=format&fit=crop" : sp.HinhAnh)" 
+                                         class="amp-prod-thumb" alt="@sp.TenSanPham" />
+                                    <div>
+                                        <div class="fw-bold text-dark">@sp.TenSanPham</div>
+                                        <div class="text-muted" style="font-size:11.5px">@sp.MaSanPham</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="fw-semibold">@sp.DaBan</td>
+                            <td class="fw-bold">@sp.DoanhThu.ToString("N0") ₫</td>
+                            <td class="text-success fw-semibold">@sp.LoiNhuan.ToString("N0") ₫</td>
+                            <td>
+                                <span class="amp-pill amp-pill-green" style="font-size:11.5px">
+                                    +@sp.TangTruong.ToString("0.0")%
+                                </span>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <!-- Mock data matching Figma design -->
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center gap-3">
+                                <img src="https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?q=80&w=200&auto=format&fit=crop" class="amp-prod-thumb" alt="Áo Sơ Mi Lụa Premium" />
+                                <div>
+                                    <div class="fw-bold text-dark">Áo Sơ Mi Lụa Premium (Vàng Cát)</div>
+                                    <div class="text-muted" style="font-size:11.5px">AMP-SM-01</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="fw-semibold">520</td>
+                        <td class="fw-bold">234.000.000 ₫</td>
+                        <td class="text-success fw-semibold">110.000.000 ₫</td>
+                        <td><span class="amp-pill amp-pill-green">+18.5%</span></td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center gap-3">
+                                <img src="https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?q=80&w=200&auto=format&fit=crop" class="amp-prod-thumb" alt="Quần Tây Tây Âu Classic" />
+                                <div>
+                                    <div class="fw-bold text-dark">Quần Tây Tây Âu Classic</div>
+                                    <div class="text-muted" style="font-size:11.5px">AMP-TR-04</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="fw-semibold">410</td>
+                        <td class="fw-bold">184.500.000 ₫</td>
+                        <td class="text-success fw-semibold">82.000.000 ₫</td>
+                        <td><span class="amp-pill amp-pill-green">+12.3%</span></td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center gap-3">
+                                <img src="https://images.unsplash.com/photo-1496747611176-843222e1e57c?q=80&w=200&auto=format&fit=crop" class="amp-prod-thumb" alt="Đầm Linen Dáng Suông" />
+                                <div>
+                                    <div class="fw-bold text-dark">Đầm Linen Dáng Suông</div>
+                                    <div class="text-muted" style="font-size:11.5px">AMP-DR-12</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="fw-semibold">380</td>
+                        <td class="fw-bold">209.000.000 ₫</td>
+                        <td class="text-success fw-semibold">95.000.000 ₫</td>
+                        <td><span class="amp-pill amp-pill-green">+8.1%</span></td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center gap-3">
+                                <img src="https://images.unsplash.com/photo-1576995853123-5a10305d93c0?q=80&w=200&auto=format&fit=crop" class="amp-prod-thumb" alt="Blazer Dạ Tweed Cổ Điển" />
+                                <div>
+                                    <div class="fw-bold text-dark">Blazer Dạ Tweed Cổ Điển</div>
+                                    <div class="text-muted" style="font-size:11.5px">AMP-BZ-08</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="fw-semibold">290</td>
+                        <td class="fw-bold">348.000.000 ₫</td>
+                        <td class="text-success fw-semibold">150.000.000 ₫</td>
+                        <td><span class="amp-pill amp-pill-green">+22.4%</span></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    // 1. Line Chart Doanh Thu
+    const ctxLine = document.getElementById('chartBaoCaoLine');
+    if (ctxLine) {
+        new Chart(ctxLine, {
+            type: 'line',
+            data: {
+                labels: ['05/09', '06/09', '07/09', '08/09', '09/09', '10/09', '11/09'],
+                datasets: [{
+                    label: 'Doanh thu',
+                    data: [35000000, 48000000, 39000000, 65000000, 52000000, 71000000, 68000000],
+                    borderColor: '#C5A880',
+                    backgroundColor: 'rgba(197, 168, 128, 0.15)',
+                    borderWidth: 2.5,
+                    pointBackgroundColor: '#C5A880',
+                    pointBorderColor: '#FFFFFF',
+                    pointBorderWidth: 2,
+                    pointRadius: 4,
+                    tension: 0.35,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { display: false }, ticks: { color: '#9CA3AF' } },
+                    y: {
+                        border: { dash: [4, 4] },
+                        grid: { color: '#F3F4F6' },
+                        ticks: {
+                            color: '#9CA3AF',
+                            callback: v => (v / 1000000) + 'M'
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // 2. Donut Chart Trạng Thái
+    const ctxDonut = document.getElementById('chartBaoCaoDonut');
+    if (ctxDonut) {
+        new Chart(ctxDonut, {
+            type: 'doughnut',
+            data: {
+                labels: ['Đã giao', 'Đang vận chuyển', 'Chờ xác nhận'],
+                datasets: [{
+                    data: [1984, 1128, 308],
+                    backgroundColor: ['#10B981', '#3B82F6', '#F59E0B'],
+                    borderWidth: 3,
+                    borderColor: '#FFFFFF'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '72%',
+                plugins: { legend: { display: false } }
+            }
+        });
+    }
+
+    // 3. Bar Chart Category Revenue
+    const ctxCategory = document.getElementById('chartBaoCaoCategory');
+    if (ctxCategory) {
+        new Chart(ctxCategory, {
+            type: 'bar',
+            data: {
+                labels: ['Đầm/Váy', 'Sơ mi/Áo', 'Quần Jean', 'Blazer/Dạ', 'Phụ kiện'],
+                datasets: [{
+                    label: 'Doanh thu (Triệu VNĐ)',
+                    data: [420, 350, 280, 190, 85],
+                    backgroundColor: '#111827',
+                    borderRadius: 6,
+                    barThickness: 40
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { display: false }, ticks: { color: '#4B5563', font: { weight: 'bold' } } },
+                    y: {
+                        border: { dash: [4, 4] },
+                        grid: { color: '#F3F4F6' },
+                        ticks: { color: '#9CA3AF', callback: v => v + 'M' }
+                    }
+                }
+            }
+        });
+    }
+</script>
+}

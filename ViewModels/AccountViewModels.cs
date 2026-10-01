@@ -12,6 +12,7 @@ namespace AMPFashionStore.ViewModels
 
         [Required(ErrorMessage = "Vui lòng nhập email")]
         [EmailAddress(ErrorMessage = "Email không đúng định dạng")]
+        [RegularExpression(@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", ErrorMessage = "Email không đúng định dạng (ví dụ: example@gmail.com)")]
         [Display(Name = "Email")]
         public string Email { get; set; } = string.Empty;
 
@@ -31,6 +32,10 @@ namespace AMPFashionStore.ViewModels
         [Display(Name = "Xác nhận mật khẩu")]
         [Compare("MatKhau", ErrorMessage = "Mật khẩu xác nhận không khớp")]
         public string XacNhanMatKhau { get; set; } = string.Empty;
+
+        [Range(typeof(bool), "true", "true", ErrorMessage = "Vui lòng chọn chấp nhận Điều khoản dịch vụ và Chính sách bảo mật.")]
+        [Display(Name = "Điều khoản dịch vụ")]
+        public bool DongYDieuKhoan { get; set; }
     }
 
     /// <summary>Dữ liệu đăng ký tạm lưu trong Session trong lúc chờ xác thực OTP.</summary>

@@ -20,6 +20,12 @@ namespace AMPFashionStore.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Index(LienHe model)
         {
+            if (!string.IsNullOrWhiteSpace(model.Email) && 
+                !System.Text.RegularExpressions.Regex.IsMatch(model.Email.Trim(), @"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"))
+            {
+                ModelState.AddModelError(nameof(model.Email), "Email không đúng định dạng (ví dụ: example@gmail.com).");
+            }
+
             if (!ModelState.IsValid) return View(model);
 
             model.NgayGui = DateTime.Now;

@@ -1,36 +1,54 @@
 @model TaiKhoanFormViewModel
 @{
-    ViewData["Title"] = "Thêm tài khoản";
+    ViewData["Title"] = "Thêm tài khoản mới";
+    var returnUrl = ViewBag.ReturnUrl as string ?? (Model.VaiTro == VaiTro.KhachHang ? "/QuanLy/TaiKhoan/KhachHang" : "/QuanLy/TaiKhoan/NhanVien");
 }
-<div asp-validation-summary="ModelOnly" class="validation-summary-errors"></div>
-<div class="amp-table-card" style="padding:24px;max-width:560px">
+<div class="amp-box-card" style="max-width:600px;margin:0 auto">
+    <h5 class="fw-bold mb-4" style="font-size:18px">Thông tin tài khoản mới</h5>
+
     <form asp-action="Them" method="post">
-        <div class="amp-field">
-            <label asp-for="HoTen" class="amp-label"></label>
-            <input asp-for="HoTen" class="form-control" />
-            <span asp-validation-for="HoTen" class="text-danger"></span>
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="returnUrl" value="@returnUrl" />
+
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2" style="font-size:13px"></div>
+
+        <div class="mb-3">
+            <label asp-for="HoTen" class="form-label fw-semibold" style="font-size:13px">Họ và tên <span class="text-danger">*</span></label>
+            <input asp-for="HoTen" class="form-control" placeholder="Ví dụ: Lê Minh Thức" />
+            <span asp-validation-for="HoTen" class="text-danger" style="font-size:12px"></span>
         </div>
-        <div class="amp-field">
-            <label asp-for="Email" class="amp-label"></label>
-            <input asp-for="Email" class="form-control" />
-            <span asp-validation-for="Email" class="text-danger"></span>
+
+        <div class="mb-3">
+            <label asp-for="Email" class="form-label fw-semibold" style="font-size:13px">Địa chỉ Email <span class="text-danger">*</span></label>
+            <input asp-for="Email" class="form-control" placeholder="user@ampfashion.vn" />
+            <span asp-validation-for="Email" class="text-danger" style="font-size:12px"></span>
         </div>
-        <div class="amp-field">
-            <label asp-for="SoDienThoai" class="amp-label"><span class="opt">(tùy chọn)</span></label>
-            <input asp-for="SoDienThoai" class="form-control" />
+
+        <div class="mb-3">
+            <label asp-for="SoDienThoai" class="form-label fw-semibold" style="font-size:13px">Số điện thoại <span class="text-muted fw-normal">(tùy chọn)</span></label>
+            <input asp-for="SoDienThoai" class="form-control" placeholder="0901234567" />
+            <span asp-validation-for="SoDienThoai" class="text-danger" style="font-size:12px"></span>
         </div>
-        <div class="amp-field">
-            <label asp-for="VaiTro" class="amp-label"></label>
+
+        <div class="mb-3">
+            <label asp-for="VaiTro" class="form-label fw-semibold" style="font-size:13px">Vai trò hệ thống <span class="text-danger">*</span></label>
             <select asp-for="VaiTro" class="form-select" asp-items="Html.GetEnumSelectList<VaiTro>()"></select>
+            <span asp-validation-for="VaiTro" class="text-danger" style="font-size:12px"></span>
         </div>
-        <div class="amp-field">
-            <label asp-for="MatKhau" class="amp-label"></label>
+
+        <div class="mb-4">
+            <label asp-for="MatKhau" class="form-label fw-semibold" style="font-size:13px">Mật khẩu khởi tạo <span class="text-danger">*</span></label>
             <input asp-for="MatKhau" class="form-control" placeholder="Tối thiểu 6 ký tự" />
-            <span asp-validation-for="MatKhau" class="text-danger"></span>
+            <span asp-validation-for="MatKhau" class="text-danger" style="font-size:12px"></span>
         </div>
-        <div class="d-flex gap-2">
-            <button type="submit" class="amp-btn amp-btn-primary">Tạo tài khoản</button>
-            <a asp-action="DanhSach" class="amp-btn amp-btn-outline">Hủy</a>
+
+        <div class="d-flex align-items-center gap-3 pt-3 border-top">
+            <button type="submit" class="amp-btn-dark-pill">
+                <i class="bi bi-check2"></i> Tạo tài khoản
+            </button>
+            <a href="@returnUrl" class="btn btn-light rounded-pill px-4" style="font-size:13.5px;font-weight:600">
+                Hủy bỏ
+            </a>
         </div>
     </form>
 </div>

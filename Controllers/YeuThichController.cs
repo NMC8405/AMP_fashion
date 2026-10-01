@@ -42,7 +42,7 @@ namespace AMPFashionStore.Controllers
         // ================= UC32: Thêm sản phẩm yêu thích =================
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Them(int sanPhamId, string? veTrang)
+        public async Task<IActionResult> Them(int sanPhamId, string? veTrang, string? returnUrl)
         {
             var userId = User.GetUserId();
             var daCo = await _db.YeuThichs.AnyAsync(y => y.NguoiDungId == userId && y.SanPhamId == sanPhamId);
@@ -52,13 +52,20 @@ namespace AMPFashionStore.Controllers
                 await _db.SaveChangesAsync();
                 TempData["ThongBao"] = "Đã thêm vào danh sách yêu thích.";
             }
-            return DieuHuongVeTrang(veTrang, sanPhamId);
+
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest" || Request.Headers["Accept"].ToString().Contains("application/json"))
+            {
+                var count = await _db.YeuThichs.CountAsync(y => y.NguoiDungId == userId);
+                return Json(new { success = true, daYeuThich = true, count, message = "Đã thêm vào danh sách yêu thích." });
+            }
+
+            return DieuHuongVeTrang(veTrang, returnUrl, sanPhamId);
         }
 
         // ================= UC33: Xóa sản phẩm yêu thích =================
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Xoa(int sanPhamId, string? veTrang)
+        public async Task<IActionResult> Xoa(int sanPhamId, string? veTrang, string? returnUrl)
         {
             var userId = User.GetUserId();
             var dong = await _db.YeuThichs.FirstOrDefaultAsync(y => y.NguoiDungId == userId && y.SanPhamId == sanPhamId);
@@ -68,11 +75,25 @@ namespace AMPFashionStore.Controllers
                 await _db.SaveChangesAsync();
                 TempData["ThongBao"] = "Đã bỏ khỏi danh sách yêu thích.";
             }
-            return DieuHuongVeTrang(veTrang, sanPhamId);
+
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest" || Request.Headers["Accept"].ToString().Contains("application/json"))
+            {
+                var count = await _db.YeuThichs.CountAsync(y => y.NguoiDungId == userId);
+                return Json(new { success = true, daYeuThich = false, count, message = "Đã bỏ khỏi danh sách yêu thích." });
+            }
+
+            return DieuHuongVeTrang(veTrang, returnUrl, sanPhamId);
         }
 
-        private IActionResult DieuHuongVeTrang(string? veTrang, int sanPhamId)
+        private IActionResult DieuHuongVeTrang(string? veTrang, string? returnUrl, int sanPhamId)
         {
+            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+                return Redirect(returnUrl);
+
+            var referer = Request.Headers["Referer"].ToString();
+            if (!string.IsNullOrEmpty(referer) && (referer.StartsWith("/") || referer.Contains(Request.Host.Value)))
+                return Redirect(referer);
+
             if (veTrang == "chi-tiet") return RedirectToAction("ChiTiet", "SanPham", new { id = sanPhamId });
             if (veTrang == "danh-sach") return RedirectToAction("DanhSach", "SanPham");
             return RedirectToAction(nameof(Index));

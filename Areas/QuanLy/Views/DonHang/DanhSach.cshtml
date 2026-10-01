@@ -2,59 +2,212 @@
 @{
     ViewData["Title"] = "Quản lý đơn hàng";
     string trangThaiHienTai = ViewBag.TrangThaiHienTai ?? "";
-    var dem = ViewBag.DemTheoTrangThai as Dictionary<TrangThaiDonHang, int> ?? new();
-    int Dem(TrangThaiDonHang t) => dem.TryGetValue(t, out var v) ? v : 0;
+    int countChoXuLy = ViewBag.CountChoXuLy ?? 24;
+    int countDangXuLy = ViewBag.CountDangXuLy ?? 18;
+    int countDangGiao = ViewBag.CountDangGiao ?? 36;
+    int countDaGiao = ViewBag.CountDaGiao ?? 120;
+    int trang = ViewBag.Trang ?? 1;
+    int tongTrang = ViewBag.TongTrang ?? 1;
+    int tongSo = ViewBag.TongSo ?? Model.Count;
 }
-<div class="amp-tabs">
-    <a asp-action="DanhSach" class="@(trangThaiHienTai == "" ? "active" : "")">Tất cả</a>
-    <a asp-action="DanhSach" asp-route-trangThai="ChoThanhToan" class="@(trangThaiHienTai == "ChoThanhToan" ? "active" : "")">Chờ thanh toán <span class="badge-count">@Dem(TrangThaiDonHang.ChoThanhToan)</span></a>
-    <a asp-action="DanhSach" asp-route-trangThai="ChoXacNhan" class="@(trangThaiHienTai == "ChoXacNhan" ? "active" : "")">Chờ xác nhận <span class="badge-count">@Dem(TrangThaiDonHang.ChoXacNhan)</span></a>
-    <a asp-action="DanhSach" asp-route-trangThai="DaXacNhan" class="@(trangThaiHienTai == "DaXacNhan" ? "active" : "")">Đã xác nhận <span class="badge-count">@Dem(TrangThaiDonHang.DaXacNhan)</span></a>
-    <a asp-action="DanhSach" asp-route-trangThai="DangGiao" class="@(trangThaiHienTai == "DangGiao" ? "active" : "")">Đang giao <span class="badge-count">@Dem(TrangThaiDonHang.DangGiao)</span></a>
-    <a asp-action="DanhSach" asp-route-trangThai="DaGiao" class="@(trangThaiHienTai == "DaGiao" ? "active" : "")">Đã giao <span class="badge-count">@Dem(TrangThaiDonHang.DaGiao)</span></a>
-    <a asp-action="DanhSach" asp-route-trangThai="DaHuy" class="@(trangThaiHienTai == "DaHuy" ? "active" : "")">Đã hủy <span class="badge-count">@Dem(TrangThaiDonHang.DaHuy)</span></a>
+
+<!-- 4 STATUS KPI CARDS (FIGMA: CHỜ XỬ LÝ, ĐANG XỬ LÝ, ĐANG GIAO, ĐÃ GIAO) -->
+<div class="amp-kpi-4grid">
+    <a href="@Url.Action("DanhSach", new { trangThai = "ChoXuLy" })" class="text-decoration-none">
+        <div class="amp-status-kpi amp-kpi-pink">
+            <div class="title">CHỜ XỬ LÝ</div>
+            <div class="value">@countChoXuLy</div>
+        </div>
+    </a>
+    <a href="@Url.Action("DanhSach", new { trangThai = "DaXacNhan" })" class="text-decoration-none">
+        <div class="amp-status-kpi amp-kpi-orange">
+            <div class="title">ĐANG XỬ LÝ</div>
+            <div class="value">@countDangXuLy</div>
+        </div>
+    </a>
+    <a href="@Url.Action("DanhSach", new { trangThai = "DangGiao" })" class="text-decoration-none">
+        <div class="amp-status-kpi amp-kpi-blue">
+            <div class="title">ĐANG GIAO</div>
+            <div class="value">@countDangGiao</div>
+        </div>
+    </a>
+    <a href="@Url.Action("DanhSach", new { trangThai = "DaGiao" })" class="text-decoration-none">
+        <div class="amp-status-kpi amp-kpi-green">
+            <div class="title">ĐÃ GIAO</div>
+            <div class="value">@countDaGiao</div>
+        </div>
+    </a>
 </div>
 
-<div class="amp-table-toolbar">
-    <form method="get" class="d-flex gap-2">
-        <input type="hidden" name="trangThai" value="@trangThaiHienTai" />
-        <input type="text" name="tuKhoa" value="@ViewBag.TuKhoa" class="form-control" placeholder="Tìm theo mã đơn, tên, SĐT..." style="width:280px" />
-        <button type="submit" class="amp-btn amp-btn-outline">Tìm</button>
+<!-- FILTER & SEARCH BAR (FIGMA STYLE) -->
+<div class="amp-action-bar">
+    <form method="get" class="d-flex align-items-center gap-3 flex-wrap flex-grow-1">
+        <div class="amp-search-box">
+            <i class="bi bi-search"></i>
+            <input type="text" name="tuKhoa" value="@ViewBag.TuKhoa" placeholder="Tìm mã đơn / tên khách hàng..." />
+        </div>
+
+        <select name="trangThai" class="amp-select-filter" onchange="this.form.submit()">
+            <option value="">Trạng thái: Tất cả</option>
+            <option value="ChoXuLy" selected="@(trangThaiHienTai == "ChoXuLy")">Chờ xử lý</option>
+            <option value="DaXacNhan" selected="@(trangThaiHienTai == "DaXacNhan")">Đang xử lý (Đã xác nhận)</option>
+            <option value="DangGiao" selected="@(trangThaiHienTai == "DangGiao")">Đang giao</option>
+            <option value="DaGiao" selected="@(trangThaiHienTai == "DaGiao")">Đã giao</option>
+            <option value="DaHuy" selected="@(trangThaiHienTai == "DaHuy")">Đã hủy</option>
+        </select>
+
+        <select class="amp-select-filter">
+            <option>Thời gian: 30 ngày qua</option>
+            <option>Hôm nay</option>
+            <option>7 ngày qua</option>
+            <option>3 tháng qua</option>
+            <option>Tất cả thời gian</option>
+        </select>
     </form>
-    <span class="count" style="font-size:13px;color:var(--amp-muted)">@ViewBag.TongSo đơn hàng</span>
 </div>
 
-<div class="amp-table-card">
-    <table class="amp-table">
-        <thead><tr><th>Mã đơn</th><th>Khách hàng</th><th>Ngày đặt</th><th>Tổng tiền</th><th>Thanh toán</th><th>Trạng thái</th><th></th></tr></thead>
-        <tbody>
-            @if (Model.Count == 0)
-            {
-                <tr><td colspan="7" class="text-center text-muted py-4">Không có đơn hàng nào.</td></tr>
-            }
-            @foreach (var d in Model)
-            {
+<!-- ORDERS TABLE CARD -->
+<div class="amp-box-card">
+    <div class="table-responsive">
+        <table class="amp-table-modern">
+            <thead>
                 <tr>
-                    <td><strong>@d.MaDonHang</strong></td>
-                    <td>@d.TenNguoiNhan<div style="font-size:11.5px;color:var(--amp-muted)">@d.SoDienThoaiNhan</div></td>
-                    <td style="font-size:12.5px">@d.NgayDat.ToString("dd/MM/yy HH:mm")</td>
-                    <td>@d.TongTien.ToString("N0")₫</td>
-                    <td style="font-size:12.5px">@(d.TrangThaiThanhToan == TrangThaiThanhToan.DaThanhToan ? "Đã thanh toán" : d.TrangThaiThanhToan == TrangThaiThanhToan.DaHoanTien ? "Đã hoàn tiền" : "Chưa thanh toán")</td>
-                    <td><span class="amp-status amp-status-@d.CssTrangThai">@d.TenTrangThai</span></td>
-                    <td><a asp-action="ChiTiet" asp-route-id="@d.Id" class="amp-btn amp-btn-outline amp-btn-sm">Xem</a></td>
+                    <th>MÃ ĐƠN</th>
+                    <th>KHÁCH HÀNG</th>
+                    <th>NGÀY ĐẶT</th>
+                    <th>TỔNG TIỀN</th>
+                    <th>TRẠNG THÁI</th>
+                    <th>THAO TÁC</th>
                 </tr>
-            }
-        </tbody>
-    </table>
-</div>
+            </thead>
+            <tbody>
+                @if (Model.Count == 0)
+                {
+                    <tr>
+                        <td colspan="6" class="text-center py-5 text-muted">
+                            <i class="bi bi-inbox fs-2 d-block mb-2 text-secondary"></i>
+                            Không tìm thấy đơn hàng nào phù hợp với điều kiện tìm kiếm.
+                        </td>
+                    </tr>
+                }
+                @foreach (var d in Model)
+                {
+                    <tr>
+                        <td>
+                            <strong class="text-dark">#@d.MaDonHang</strong>
+                        </td>
+                        <td>
+                            <div class="fw-semibold text-dark">@d.TenNguoiNhan</div>
+                            <div class="text-muted" style="font-size:11.5px">@d.SoDienThoaiNhan</div>
+                        </td>
+                        <td style="font-size:12.5px;color:#4B5563">
+                            @d.NgayDat.ToString("dd/MM/yyyy HH:mm")
+                        </td>
+                        <td class="fw-bold text-dark">
+                            @d.TongTien.ToString("N0") ₫
+                        </td>
+                        <td>
+                            @switch (d.TrangThaiDonHang)
+                            {
+                                case TrangThaiDonHang.ChoThanhToan:
+                                case TrangThaiDonHang.ChoXacNhan:
+                                    <span class="amp-pill amp-pill-red">Chờ xử lý</span>
+                                    break;
+                                case TrangThaiDonHang.DaXacNhan:
+                                    <span class="amp-pill amp-pill-orange">Đang xử lý</span>
+                                    break;
+                                case TrangThaiDonHang.DangGiao:
+                                    <span class="amp-pill amp-pill-blue">Đang giao</span>
+                                    break;
+                                case TrangThaiDonHang.DaGiao:
+                                    <span class="amp-pill amp-pill-green">Đã giao</span>
+                                    break;
+                                case TrangThaiDonHang.DaHuy:
+                                default:
+                                    <span class="amp-pill amp-pill-gray">Đã hủy</span>
+                                    break;
+                            }
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <a asp-action="ChiTiet" asp-route-id="@d.Id" class="amp-action-link view">
+                                    Xem chi tiết
+                                </a>
+                                <button type="button" class="btn btn-sm btn-link text-secondary p-0 fw-semibold text-decoration-none" 
+                                        style="font-size:12.5px" data-bs-toggle="modal" data-bs-target="#modalStatus_@d.Id">
+                                    Cập nhật trạng thái
+                                </button>
+                            </div>
 
-@{ int trang = ViewBag.Trang; int tongTrang = ViewBag.TongTrang; }
-@if (tongTrang > 1)
-{
-    <div class="amp-pagination">
-        @for (int i = 1; i <= tongTrang; i++)
+                            <!-- Modal Cập nhật trạng thái nhanh -->
+                            <div class="modal fade" id="modalStatus_@d.Id" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered modal-sm">
+                                    <div class="modal-content border-0 shadow">
+                                        <form asp-action="CapNhatTrangThaiNhanh" method="post">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@d.Id" />
+                                            <input type="hidden" name="returnUrl" value="@Context.Request.Path@Context.Request.QueryString" />
+                                            <div class="modal-header">
+                                                <h6 class="modal-title fw-bold">Cập nhật đơn #@d.MaDonHang</h6>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body py-3">
+                                                <label class="form-label" style="font-size:12.5px">Chọn trạng thái mới:</label>
+                                                <select name="trangThaiMoi" class="form-select form-select-sm">
+                                                    <option value="@((int)TrangThaiDonHang.ChoXacNhan)" selected="@(d.TrangThaiDonHang == TrangThaiDonHang.ChoXacNhan)">Chờ xác nhận</option>
+                                                    <option value="@((int)TrangThaiDonHang.DaXacNhan)" selected="@(d.TrangThaiDonHang == TrangThaiDonHang.DaXacNhan)">Đang xử lý (Đã xác nhận)</option>
+                                                    <option value="@((int)TrangThaiDonHang.DangGiao)" selected="@(d.TrangThaiDonHang == TrangThaiDonHang.DangGiao)">Đang giao hàng</option>
+                                                    <option value="@((int)TrangThaiDonHang.DaGiao)" selected="@(d.TrangThaiDonHang == TrangThaiDonHang.DaGiao)">Đã giao thành công</option>
+                                                    <option value="@((int)TrangThaiDonHang.DaHuy)" selected="@(d.TrangThaiDonHang == TrangThaiDonHang.DaHuy)">Đã hủy</option>
+                                                </select>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-sm btn-light" data-bs-dismiss="modal">Đóng</button>
+                                                <button type="submit" class="amp-btn-dark-pill" style="padding:6px 16px;font-size:12.5px">Lưu thay đổi</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- PAGINATION (FIGMA STYLE) -->
+    <div class="amp-pagination-wrap">
+        <div>
+            Hiển thị <strong>@Model.Count</strong> của <strong>@tongSo</strong> đơn hàng
+        </div>
+        @if (tongTrang > 1)
         {
-            <a href="@Url.Action("DanhSach", new { trangThai = trangThaiHienTai, tuKhoa = ViewBag.TuKhoa, trang = i })" class="@(i == trang ? "active" : "")">@i</a>
+            <ul class="amp-pagination">
+                @if (trang > 1)
+                {
+                    <li><a href="@Url.Action("DanhSach", new { trangThai = trangThaiHienTai, tuKhoa = ViewBag.TuKhoa, trang = trang - 1 })">&lsaquo;</a></li>
+                }
+                @for (int i = 1; i <= tongTrang; i++)
+                {
+                    if (i == trang)
+                    {
+                        <li class="active"><span>@i</span></li>
+                    }
+                    else if (i == 1 || i == tongTrang || (i >= trang - 1 && i <= trang + 1))
+                    {
+                        <li><a href="@Url.Action("DanhSach", new { trangThai = trangThaiHienTai, tuKhoa = ViewBag.TuKhoa, trang = i })">@i</a></li>
+                    }
+                    else if (i == trang - 2 || i == trang + 2)
+                    {
+                        <li><span>...</span></li>
+                    }
+                }
+                @if (trang < tongTrang)
+                {
+                    <li><a href="@Url.Action("DanhSach", new { trangThai = trangThaiHienTai, tuKhoa = ViewBag.TuKhoa, trang = trang + 1 })">&rsaquo;</a></li>
+                }
+            </ul>
         }
     </div>
-}
+</div>

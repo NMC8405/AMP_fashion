@@ -1,69 +1,200 @@
 @{
     var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
-    bool IsActive(string c) => string.Equals(currentController, c, StringComparison.OrdinalIgnoreCase);
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+    bool IsActive(string c, string? a = null)
+    {
+        if (a == null) return string.Equals(currentController, c, StringComparison.OrdinalIgnoreCase);
+        return string.Equals(currentController, c, StringComparison.OrdinalIgnoreCase) && string.Equals(currentAction, a, StringComparison.OrdinalIgnoreCase);
+    }
+    var isAdmin = User.IsInRole("QuanTriVien");
+    var userInitial = !string.IsNullOrEmpty(User.Identity?.Name) ? User.Identity.Name.Substring(0, 1).ToUpper() : "A";
 }
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] — Quản lý AMP</title>
+    <title>@ViewData["Title"] — AMP Fashion Management</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body>
     <div class="amp-admin-shell">
+        <!-- SIDEBAR (FIGMA AMP_WEB) -->
         <aside class="amp-admin-sidebar">
-            <a href="/" class="logo">AMP <span style="font-size:11px;font-weight:500;opacity:.6">Quản lý</span></a>
-
-            <div class="grp-label">Tổng quan</div>
-            <a href="/QuanLy/Dashboard" class="@(IsActive("Dashboard") ? "active" : "")"><i class="bi bi-speedometer2"></i> Thống kê</a>
-
-            <div class="grp-label">Bán hàng</div>
-            <a href="/QuanLy/SanPham/DanhSach" class="@(IsActive("SanPham") ? "active" : "")"><i class="bi bi-hanger"></i> Sản phẩm</a>
-            <a href="/QuanLy/DanhMuc/DanhSach" class="@(IsActive("DanhMuc") ? "active" : "")"><i class="bi bi-tags"></i> Danh mục</a>
-            <a href="/QuanLy/ThuocTinh/DanhSach" class="@(IsActive("ThuocTinh") ? "active" : "")"><i class="bi bi-palette"></i> Màu sắc &amp; Size</a>
-            <a href="/QuanLy/MaGiamGia/DanhSach" class="@(IsActive("MaGiamGia") ? "active" : "")"><i class="bi bi-ticket-perforated"></i> Mã giảm giá</a>
-            <a href="/QuanLy/DonHang/DanhSach" class="@(IsActive("DonHang") ? "active" : "")"><i class="bi bi-bag-check"></i> Đơn hàng</a>
-
-            @if (User.IsInRole("QuanTriVien"))
-            {
-                <div class="grp-label">Quản trị</div>
-                <a href="/QuanLy/TaiKhoan/DanhSach" class="@(IsActive("TaiKhoan") ? "active" : "")"><i class="bi bi-people"></i> Tài khoản</a>
-            }
-
-            <div class="grp-label">Khác</div>
-            <a href="/"><i class="bi bi-shop"></i> Về trang cửa hàng</a>
-            <form asp-area="" asp-controller="TaiKhoan" asp-action="DangXuat" method="post">
-                <button type="submit" class="btn p-0 border-0 bg-transparent w-100 text-start" style="all:unset;cursor:pointer;display:flex;align-items:center;gap:11px;padding:11px 10px;border-radius:3px;font-size:13.5px;font-weight:600;color:#cfcfca;width:100%">
-                    <i class="bi bi-box-arrow-right"></i> Đăng xuất
-                </button>
-            </form>
-        </aside>
-
-        <div class="amp-admin-main">
-            <div class="amp-admin-topbar">
-                <div>
-                    <button class="amp-mobile-toggle d-inline-flex d-md-none" data-admin-toggle type="button" style="margin-right:10px"><i class="bi bi-list"></i></button>
-                    <h1 style="display:inline">@ViewData["Title"]</h1>
-                </div>
-                <div class="who"><i class="bi bi-person-circle me-1"></i>@User.Identity?.Name <span class="ms-1" style="opacity:.6">(@(User.IsInRole("QuanTriVien") ? "Quản trị viên" : "Nhân viên"))</span></div>
+            <div class="brand-wrap">
+                <a href="/" class="logo">
+                    AMP
+                </a>
+                <div class="role-badge">@(isAdmin ? "ADMINISTRATOR" : "MANAGER")</div>
             </div>
 
-            @if (TempData["ThongBao"] != null)
+            <div class="grp-label">Hệ thống</div>
+            <a href="/QuanLy/Dashboard" class="@(IsActive("Dashboard", "Index") ? "active" : "")">
+                <i class="bi bi-grid-fill"></i> Tổng quan
+            </a>
+            <a href="/QuanLy/SanPham/DanhSach" class="@(IsActive("SanPham") ? "active" : "")">
+                <i class="bi bi-box-seam"></i> Sản phẩm
+            </a>
+            <a href="/QuanLy/DonHang/DanhSach" class="@(IsActive("DonHang") ? "active" : "")">
+                <i class="bi bi-receipt"></i> Đơn hàng
+            </a>
+
+            @if (isAdmin)
             {
-                <div class="amp-alert amp-alert-success" data-auto-dismiss><i class="bi bi-check-circle me-1"></i> @TempData["ThongBao"]</div>
-            }
-            @if (TempData["Loi"] != null)
-            {
-                <div class="amp-alert amp-alert-danger" data-auto-dismiss><i class="bi bi-exclamation-circle me-1"></i> @TempData["Loi"]</div>
+                <a href="/QuanLy/TaiKhoan/KhachHang" class="@(IsActive("TaiKhoan", "KhachHang") ? "active" : "")">
+                    <i class="bi bi-people"></i> Khách hàng
+                </a>
             }
 
-            @RenderBody()
+            <a href="/QuanLy/DanhGia/DanhSach" class="@(IsActive("DanhGia") ? "active" : "")">
+                <i class="bi bi-star"></i> Đánh giá
+            </a>
+            <a href="/QuanLy/MaGiamGia/DanhSach" class="@(IsActive("MaGiamGia") ? "active" : "")">
+                <i class="bi bi-ticket-perforated"></i> Khuyến mãi
+            </a>
+
+            @if (isAdmin)
+            {
+                <a href="/QuanLy/TaiKhoan/NhanVien" class="@(IsActive("TaiKhoan", "NhanVien") ? "active" : "")">
+                    <i class="bi bi-person-badge"></i> Nhân viên
+                </a>
+            }
+
+            <a href="/QuanLy/Dashboard/BaoCao" class="@(IsActive("Dashboard", "BaoCao") ? "active" : "")">
+                <i class="bi bi-bar-chart-line"></i> Báo cáo
+            </a>
+
+            <div class="grp-label">Cấu hình kho</div>
+            <a href="/QuanLy/DanhMuc/DanhSach" class="@(IsActive("DanhMuc") ? "active" : "")">
+                <i class="bi bi-tags"></i> Danh mục
+            </a>
+            <a href="/QuanLy/ThuocTinh/DanhSach" class="@(IsActive("ThuocTinh") ? "active" : "")">
+                <i class="bi bi-palette"></i> Màu &amp; Size
+            </a>
+
+            <div class="sidebar-bottom">
+                <a href="/" target="_blank">
+                    <i class="bi bi-shop"></i> Cửa hàng online
+                </a>
+                <form asp-area="" asp-controller="TaiKhoan" asp-action="DangXuat" method="post">
+                    <button type="submit" class="btn p-0 border-0 bg-transparent w-100 text-start" style="all:unset;cursor:pointer;display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:8px;font-size:13.5px;font-weight:500;color:#DC2626;width:100%">
+                        <i class="bi bi-box-arrow-right" style="color:#DC2626"></i> Đăng xuất
+                    </button>
+                </form>
+            </div>
+        </aside>
+
+        <!-- MAIN BODY -->
+        <div class="amp-admin-body">
+            <main class="amp-admin-main">
+                <!-- TOPBAR (FIGMA AMP_WEB) -->
+                <div class="amp-admin-topbar">
+                    <div class="d-flex align-items-center gap-3">
+                        <button class="btn btn-sm btn-outline-secondary d-inline-flex d-lg-none" data-admin-toggle type="button">
+                            <i class="bi bi-list fs-5"></i>
+                        </button>
+                        <h1>@(ViewData["Title"]?.ToString()?.ToUpper() ?? "QUẢN LÝ HỆ THỐNG")</h1>
+                    </div>
+                    <div class="topbar-actions">
+                        <div class="notif-btn" title="Thông báo hệ thống">
+                            <i class="bi bi-bell"></i>
+                            <span class="notif-dot"></span>
+                        </div>
+                        <div class="user-capsule">
+                            <div class="user-avatar">@userInitial</div>
+                            <div class="user-info">
+                                <span class="user-name">@User.Identity?.Name</span>
+                                <span class="user-role">@(isAdmin ? "Quản trị viên" : "Nhân viên quản lý")</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                @if (TempData["ThongBao"] != null)
+                {
+                    <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm d-flex align-items-center gap-2 mb-4" role="alert" style="border-radius:10px;background:#ECFDF5;color:#065F46">
+                        <i class="bi bi-check-circle-fill fs-5 text-success"></i>
+                        <div>@TempData["ThongBao"]</div>
+                        <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                }
+                @if (TempData["Loi"] != null)
+                {
+                    <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm d-flex align-items-center gap-2 mb-4" role="alert" style="border-radius:10px;background:#FEF2F2;color:#991B1B">
+                        <i class="bi bi-exclamation-triangle-fill fs-5 text-danger"></i>
+                        <div>@TempData["Loi"]</div>
+                        <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                }
+
+                @RenderBody()
+            </main>
+
+            <!-- DARK FOOTER SECTION (FIGMA DESIGN) -->
+            <footer class="amp-admin-footer">
+                <div class="container-fluid p-0">
+                    <div class="row g-4">
+                        <div class="col-lg-4 col-md-12">
+                            <div class="f-logo">AMP</div>
+                            <p class="f-desc">
+                                Thương hiệu thời trang tối giản đương đại, AMP định hình phong cách qua chất liệu chọn lọc và những phom dáng vượt thời gian.
+                            </p>
+                            <div class="f-social">
+                                <a href="https://facebook.com" target="_blank"><i class="bi bi-facebook"></i></a>
+                                <a href="https://instagram.com" target="_blank"><i class="bi bi-instagram"></i></a>
+                                <a href="https://youtube.com" target="_blank"><i class="bi bi-youtube"></i></a>
+                            </div>
+                        </div>
+                        <div class="col-lg-2 col-md-4 col-6">
+                            <h6>Về chúng tôi</h6>
+                            <ul>
+                                <li><a href="/">Về AMP</a></li>
+                                <li><a href="/">Phát Triển Bền Vững</a></li>
+                                <li><a href="/">Tuyển Dụng</a></li>
+                                <li><a href="/">Blog Thời Trang</a></li>
+                            </ul>
+                        </div>
+                        <div class="col-lg-3 col-md-4 col-6">
+                            <h6>Hỗ trợ</h6>
+                            <ul>
+                                <li><a href="/">Chính Sách Giao Hàng</a></li>
+                                <li><a href="/">Chính Sách Đổi Trả</a></li>
+                                <li><a href="/">Hướng Dẫn Chọn Size</a></li>
+                                <li><a href="/">Câu Hỏi Thường Gặp (FAQs)</a></li>
+                            </ul>
+                        </div>
+                        <div class="col-lg-3 col-md-4 col-12">
+                            <h6>Liên hệ</h6>
+                            <div class="f-contact-item">
+                                <i class="bi bi-geo-alt"></i>
+                                <span>128 Nguyễn Trãi, Quận 1, TP. Hồ Chí Minh</span>
+                            </div>
+                            <div class="f-contact-item">
+                                <i class="bi bi-telephone"></i>
+                                <span>Hotline: 1900 6006</span>
+                            </div>
+                            <div class="f-contact-item">
+                                <i class="bi bi-envelope"></i>
+                                <span>contact@ampfashion.com</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="f-bottom">
+                        <div>&copy; 2026 AMP Fashion. Tất cả quyền được bảo lưu. Thiết kế bản quyền theo tiêu chuẩn hệ thống.</div>
+                        <div>
+                            <a href="/">Chính sách bảo mật</a>
+                            <a href="/">Điều khoản sử dụng</a>
+                        </div>
+                    </div>
+                </div>
+            </footer>
         </div>
     </div>
 
@@ -72,6 +203,12 @@
     <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
     <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script>
+        // Toggle mobile sidebar
+        document.querySelector('[data-admin-toggle]')?.addEventListener('click', function () {
+            document.querySelector('.amp-admin-sidebar')?.classList.toggle('open');
+        });
+    </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

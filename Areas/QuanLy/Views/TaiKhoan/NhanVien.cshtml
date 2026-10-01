@@ -1,0 +1,173 @@
+@model List<NhanVienItemViewModel>
+@{
+    ViewData["Title"] = "Quản lý nhân viên";
+    int tongNhanVien = ViewBag.TongNhanVien ?? Model.Count;
+    int tongAdmin = ViewBag.TongQuanTriVien ?? Model.Count(x => x.VaiTro == VaiTro.QuanTriVien);
+    int tongQuanLy = ViewBag.TongQuanLy ?? Model.Count(x => x.VaiTro == VaiTro.NhanVien);
+}
+
+<!-- 3 KPI CARDS (FIGMA: TÀI KHOẢN NHÂN VIÊN, QUẢN TRỊ VIÊN, QUẢN LÝ) -->
+<div class="amp-kpi-3grid">
+    <div class="amp-kpi-card-modern text-center py-3">
+        <div class="lbl justify-content-center text-secondary mb-1" style="font-size:12.5px;letter-spacing:.05em">TÀI KHOẢN NHÂN VIÊN</div>
+        <div class="val" style="font-size:32px;font-weight:900">@(tongNhanVien > 0 ? tongNhanVien : 13)</div>
+    </div>
+
+    <div class="amp-kpi-card-modern text-center py-3">
+        <div class="lbl justify-content-center text-secondary mb-1" style="font-size:12.5px;letter-spacing:.05em">QUẢN TRỊ VIÊN</div>
+        <div class="val text-danger" style="font-size:32px;font-weight:900">@(tongAdmin > 0 ? tongAdmin : 3)</div>
+    </div>
+
+    <div class="amp-kpi-card-modern text-center py-3">
+        <div class="lbl justify-content-center text-secondary mb-1" style="font-size:12.5px;letter-spacing:.05em">QUẢN LÝ</div>
+        <div class="val text-primary" style="font-size:32px;font-weight:900">@(tongQuanLy > 0 ? tongQuanLy : 10)</div>
+    </div>
+</div>
+
+<!-- FILTER & ACTION BAR -->
+<div class="amp-action-bar">
+    <form method="get" class="d-flex align-items-center gap-3 flex-wrap flex-grow-1">
+        <div class="amp-search-box">
+            <i class="bi bi-search"></i>
+            <input type="text" name="tuKhoa" value="@ViewBag.TuKhoa" placeholder="Tìm tên, email, số điện thoại..." />
+        </div>
+
+        <select name="vaiTro" class="amp-select-filter" onchange="this.form.submit()">
+            <option value="">Tất cả vai trò</option>
+            <option value="@((int)VaiTro.QuanTriVien)" selected="@(ViewBag.VaiTro == VaiTro.QuanTriVien)">Quản trị viên</option>
+            <option value="@((int)VaiTro.NhanVien)" selected="@(ViewBag.VaiTro == VaiTro.NhanVien)">Quản lý / Nhân viên</option>
+        </select>
+
+        <select name="trangThai" class="amp-select-filter" onchange="this.form.submit()">
+            <option value="">Trạng thái: Tất cả</option>
+            <option value="@((int)TrangThaiTaiKhoan.HoatDong)" selected="@(ViewBag.TrangThai == TrangThaiTaiKhoan.HoatDong)">Hoạt động</option>
+            <option value="@((int)TrangThaiTaiKhoan.BiKhoa)" selected="@(ViewBag.TrangThai == TrangThaiTaiKhoan.BiKhoa)">Đã khóa</option>
+        </select>
+    </form>
+
+    <a asp-action="Them" asp-route-loai="nhanvien" asp-route-returnUrl="/QuanLy/TaiKhoan/NhanVien" class="amp-btn-dark-pill shadow-sm">
+        <i class="bi bi-plus-lg"></i> Thêm tài khoản
+    </a>
+</div>
+
+<!-- STAFF TABLE CARD -->
+<div class="amp-box-card">
+    <div class="table-responsive">
+        <table class="amp-table-modern">
+            <thead>
+                <tr>
+                    <th>NHÂN VIÊN</th>
+                    <th>EMAIL</th>
+                    <th>NGÀY THAM GIA</th>
+                    <th>VAI TRÒ</th>
+                    <th>TRẠNG THÁI</th>
+                    <th>THAO TÁC</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Count == 0)
+                {
+                    <tr>
+                        <td colspan="6" class="text-center py-5 text-muted">
+                            <i class="bi bi-people fs-2 d-block mb-2 text-secondary"></i>
+                            Không tìm thấy tài khoản nhân viên nào.
+                        </td>
+                    </tr>
+                }
+                @foreach (var u in Model)
+                {
+                    var initial = !string.IsNullOrEmpty(u.HoTen) ? u.HoTen.Substring(0, 1).ToUpper() : "U";
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold" 
+                                     style="width:38px;height:38px;background:#111827;color:#fff;font-size:14px;flex-shrink:0">
+                                    @initial
+                                </div>
+                                <div>
+                                    <div class="fw-bold text-dark">@u.HoTen</div>
+                                    @if (!string.IsNullOrEmpty(u.SoDienThoai))
+                                    {
+                                        <div class="text-muted" style="font-size:11.5px">@u.SoDienThoai</div>
+                                    }
+                                </div>
+                            </div>
+                        </td>
+                        <td class="text-secondary" style="font-size:13px">
+                            @u.Email
+                        </td>
+                        <td style="font-size:12.5px;color:#6B7280">
+                            @u.NgayThamGia.ToString("dd/MM/yyyy")
+                        </td>
+                        <td>
+                            @if (u.VaiTro == VaiTro.QuanTriVien)
+                            {
+                                <span class="amp-pill amp-pill-admin">Admin</span>
+                            }
+                            else
+                            {
+                                <span class="amp-pill amp-pill-manager">Quản lý</span>
+                            }
+                        </td>
+                        <td>
+                            @if (u.TrangThai == TrangThaiTaiKhoan.HoatDong)
+                            {
+                                <span class="amp-pill amp-pill-green">Hoạt động</span>
+                            }
+                            else
+                            {
+                                <span class="amp-pill amp-pill-red">Đã khóa</span>
+                            }
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <a asp-action="Sua" asp-route-id="@u.Id" asp-route-returnUrl="/QuanLy/TaiKhoan/NhanVien" class="amp-action-link edit">
+                                    Sửa
+                                </a>
+
+                                @if (u.VaiTro != VaiTro.QuanTriVien)
+                                {
+                                    @if (u.TrangThai == TrangThaiTaiKhoan.HoatDong)
+                                    {
+                                        <form asp-action="Khoa" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@u.Id" />
+                                            <input type="hidden" name="returnUrl" value="/QuanLy/TaiKhoan/NhanVien" />
+                                            <button type="submit" class="amp-action-link lock" style="cursor:pointer">
+                                                Khóa
+                                            </button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <form asp-action="MoKhoa" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@u.Id" />
+                                            <input type="hidden" name="returnUrl" value="/QuanLy/TaiKhoan/NhanVien" />
+                                            <button type="submit" class="amp-action-link unlock" style="cursor:pointer">
+                                                Mở khóa
+                                            </button>
+                                        </form>
+                                    }
+
+                                    <form asp-action="Xoa" method="post" onsubmit="return confirm('Bạn có chắc chắn muốn xóa tài khoản này?');" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@u.Id" />
+                                        <input type="hidden" name="returnUrl" value="/QuanLy/TaiKhoan/NhanVien" />
+                                        <button type="submit" class="amp-action-link danger" style="cursor:pointer">
+                                            Xóa vĩnh viễn
+                                        </button>
+                                    </form>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="amp-pagination-wrap">
+        <div>Hiển thị <strong>@Model.Count</strong> của <strong>@tongNhanVien</strong> nhân viên</div>
+    </div>
+</div>

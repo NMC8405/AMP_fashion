@@ -18,9 +18,40 @@ namespace AMPFashionStore.Areas.QuanLy.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> DanhSach()
+        public async Task<IActionResult> DanhSach(string? tuKhoa, string? trangThai)
         {
-            var danhSach = await _db.MaGiamGias.OrderByDescending(m => m.Id).ToListAsync();
+            var query = _db.MaGiamGias.AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(tuKhoa))
+            {
+                var tk = tuKhoa.Trim().ToLower();
+                query = query.Where(m => m.Ma.ToLower().Contains(tk) || (m.MoTa != null && m.MoTa.ToLower().Contains(tk)));
+            }
+
+            var now = DateTime.Now;
+
+            if (!string.IsNullOrWhiteSpace(trangThai))
+            {
+                if (trangThai == "hoat_dong")
+                {
+                    query = query.Where(m => m.TrangThaiHoatDong && m.NgayBatDau <= now && m.NgayKetThuc >= now && (m.SoLuongToiDa == null || m.SoLuongDaDung < m.SoLuongToiDa));
+                }
+                else if (trangThai == "het_han")
+                {
+                    query = query.Where(m => !m.TrangThaiHoatDong || m.NgayKetThuc < now || (m.SoLuongToiDa != null && m.SoLuongDaDung >= m.SoLuongToiDa));
+                }
+            }
+
+            // 4 KPIs theo thiết kế Figma
+            ViewBag.TongMaGiamGia = await _db.MaGiamGias.CountAsync();
+            ViewBag.DangHoatDong = await _db.MaGiamGias.CountAsync(m => m.TrangThaiHoatDong && m.NgayBatDau <= now && m.NgayKetThuc >= now && (m.SoLuongToiDa == null || m.SoLuongDaDung < m.SoLuongToiDa));
+            ViewBag.DaHetHan = await _db.MaGiamGias.CountAsync(m => !m.TrangThaiHoatDong || m.NgayKetThuc < now || (m.SoLuongToiDa != null && m.SoLuongDaDung >= m.SoLuongToiDa));
+            ViewBag.TongLuotSuDung = (await _db.MaGiamGias.SumAsync(m => (int?)m.SoLuongDaDung)) ?? 0;
+
+            ViewBag.TuKhoa = tuKhoa;
+            ViewBag.TrangThai = trangThai;
+
+            var danhSach = await query.OrderByDescending(m => m.Id).ToListAsync();
             return View(danhSach);
         }
 

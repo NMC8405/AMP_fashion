@@ -118,7 +118,7 @@
                     @if (User.Identity?.IsAuthenticated == true)
                     {
                         <input type="hidden" name="veTrang" value="chi-tiet" form="formThemGio" />
-                        <button type="submit" formaction="@Url.Action("Them", "YeuThich")" formmethod="post" class="amp-btn amp-btn-outline @(Model.DaYeuThich ? "active" : "")" title="Yêu thích">
+                        <button type="submit" formaction="@Url.Action(Model.DaYeuThich ? "Xoa" : "Them", "YeuThich")" formmethod="post" class="amp-btn amp-btn-outline @(Model.DaYeuThich ? "active" : "")" title="@(Model.DaYeuThich ? "Bỏ yêu thích" : "Yêu thích")" style="@(Model.DaYeuThich ? "color:#ff2d67;border-color:#ff2d67;background:#fff0f4;" : "")">
                             <i class="bi @(Model.DaYeuThich ? "bi-heart-fill" : "bi-heart")"></i>
                         </button>
                     }
@@ -241,7 +241,13 @@
     function chonSize(id, btn) {
         sizeDaChon = id;
         document.getElementById('inpKichThuoc').value = id;
-        document.querySelectorAll('#sizeWrap .size-btn').forEach(b => b.classList.remove('amp-btn-primary'));
+        document.querySelectorAll('#sizeWrap .size-btn').forEach(b => {
+            b.classList.remove('active');
+            b.classList.remove('amp-btn-primary');
+            b.classList.add('amp-btn-outline');
+        });
+        btn.classList.remove('amp-btn-outline');
+        btn.classList.add('active');
         btn.classList.add('amp-btn-primary');
         capNhatTonKho();
     }

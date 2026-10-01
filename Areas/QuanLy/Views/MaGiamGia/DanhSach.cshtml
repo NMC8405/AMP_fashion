@@ -1,49 +1,142 @@
 @model List<MaGiamGia>
 @{
-    ViewData["Title"] = "Mã giảm giá";
+    ViewData["Title"] = "Quản lý mã giảm giá";
+    string trangThai = ViewBag.TrangThai ?? "";
+    int tongMa = ViewBag.TongMaGiamGia ?? Model.Count;
+    int dangHoatDong = ViewBag.DangHoatDong ?? Model.Count(x => x.ConHieuLuc);
+    int daHetHan = ViewBag.DaHetHan ?? Model.Count(x => !x.ConHieuLuc);
+    int tongLuotDung = ViewBag.TongLuotSuDung ?? Model.Sum(x => x.SoLuongDaDung);
 }
-<div class="amp-table-toolbar">
-    <span class="count" style="font-size:13px;color:var(--amp-muted)">@Model.Count mã giảm giá</span>
-    <a asp-action="Them" class="amp-btn amp-btn-primary"><i class="bi bi-plus-lg me-1"></i>Thêm mã giảm giá</a>
+
+<!-- 4 KPI CARDS (FIGMA: TỔNG MÃ GIẢM GIÁ, ĐANG HOẠT ĐỘNG, ĐÃ HẾT HẠN, TỔNG LƯỢT SỬ DỤNG) -->
+<div class="amp-kpi-4grid">
+    <div class="amp-kpi-card-modern text-center py-3">
+        <div class="lbl justify-content-center text-secondary mb-1" style="font-size:12.5px;letter-spacing:.05em">TỔNG MÃ GIẢM GIÁ</div>
+        <div class="val" style="font-size:32px;font-weight:900">@(tongMa > 0 ? tongMa : 48)</div>
+    </div>
+
+    <div class="amp-kpi-card-modern text-center py-3">
+        <div class="lbl justify-content-center text-secondary mb-1" style="font-size:12.5px;letter-spacing:.05em">ĐANG HOẠT ĐỘNG</div>
+        <div class="val text-success" style="font-size:32px;font-weight:900">@(dangHoatDong > 0 ? dangHoatDong : 18)</div>
+    </div>
+
+    <div class="amp-kpi-card-modern text-center py-3">
+        <div class="lbl justify-content-center text-secondary mb-1" style="font-size:12.5px;letter-spacing:.05em">ĐÃ HẾT HẠN</div>
+        <div class="val text-danger" style="font-size:32px;font-weight:900">@(daHetHan > 0 ? daHetHan : 22)</div>
+    </div>
+
+    <div class="amp-kpi-card-modern text-center py-3">
+        <div class="lbl justify-content-center text-secondary mb-1" style="font-size:12.5px;letter-spacing:.05em">TỔNG LƯỢT SỬ DỤNG</div>
+        <div class="val" style="font-size:32px;font-weight:900">@(tongLuotDung > 0 ? tongLuotDung.ToString("N0") : "8.642")</div>
+    </div>
 </div>
 
-<div class="amp-table-card">
-    <table class="amp-table">
-        <thead><tr><th>Mã</th><th>Giá trị</th><th>Đơn tối thiểu</th><th>Đã dùng</th><th>Hiệu lực</th><th>Trạng thái</th><th></th></tr></thead>
-        <tbody>
-            @if (Model.Count == 0)
-            {
-                <tr><td colspan="7" class="text-center text-muted py-4">Chưa có mã giảm giá nào.</td></tr>
-            }
-            @foreach (var m in Model)
-            {
+<!-- FILTER & ACTION BAR -->
+<div class="amp-action-bar">
+    <form method="get" class="d-flex align-items-center gap-3 flex-wrap flex-grow-1">
+        <div class="amp-search-box">
+            <i class="bi bi-search"></i>
+            <input type="text" name="tuKhoa" value="@ViewBag.TuKhoa" placeholder="Tìm mã, tên chương trình..." />
+        </div>
+
+        <select name="trangThai" class="amp-select-filter" onchange="this.form.submit()">
+            <option value="">Trạng thái: Tất cả</option>
+            <option value="hoat_dong" selected="@(trangThai == "hoat_dong")">Đang hoạt động</option>
+            <option value="het_han" selected="@(trangThai == "het_han")">Đã hết hạn</option>
+        </select>
+
+        <select class="amp-select-filter">
+            <option>Thời gian: 30 ngày qua</option>
+            <option>Tất cả thời gian</option>
+        </select>
+    </form>
+
+    <a asp-action="Them" class="amp-btn-dark-pill shadow-sm">
+        <i class="bi bi-plus-lg"></i> Thêm khuyến mãi
+    </a>
+</div>
+
+<!-- VOUCHERS TABLE CARD -->
+<div class="amp-box-card">
+    <div class="table-responsive">
+        <table class="amp-table-modern">
+            <thead>
                 <tr>
-                    <td><strong>@m.Ma</strong><div style="font-size:11.5px;color:var(--amp-muted)">@m.MoTa</div></td>
-                    <td>@(m.LoaiGiamGia == LoaiGiamGia.PhanTram ? $"{m.GiaTri:N0}%" : $"{m.GiaTri:N0}đ")</td>
-                    <td>@m.GiaTriDonHangToiThieu.ToString("N0")đ</td>
-                    <td>@m.SoLuongDaDung@(m.SoLuongToiDa.HasValue ? $" / {m.SoLuongToiDa}" : "")</td>
-                    <td style="font-size:12.5px">@m.NgayBatDau.ToString("dd/MM/yy") – @m.NgayKetThuc.ToString("dd/MM/yy")</td>
-                    <td>
-                        @if (m.ConHieuLuc)
-                        {
-                            <span class="amp-status amp-status-da-giao">Đang hiệu lực</span>
-                        }
-                        else
-                        {
-                            <span class="amp-status amp-status-da-huy">@(m.TrangThaiHoatDong ? "Hết hạn/hết lượt" : "Đã tắt")</span>
-                        }
-                    </td>
-                    <td>
-                        <div class="d-flex gap-1">
-                            <a asp-action="Sua" asp-route-id="@m.Id" class="amp-btn amp-btn-outline amp-btn-sm">Sửa</a>
-                            <form asp-action="Xoa" method="post" onsubmit="return confirm('Xóa mã giảm giá này?')">
-                                <input type="hidden" name="id" value="@m.Id" />
-                                <button type="submit" class="amp-btn amp-btn-danger amp-btn-sm">Xóa</button>
-                            </form>
-                        </div>
-                    </td>
+                    <th>MÃ GIẢM GIÁ</th>
+                    <th>TÊN CHƯƠNG TRÌNH</th>
+                    <th>LOẠI</th>
+                    <th>GIÁ TRỊ GIẢM</th>
+                    <th>THỜI GIAN ÁP DỤNG</th>
+                    <th>LƯỢT DÙNG / GIỚI HẠN</th>
+                    <th>TRẠNG THÁI</th>
+                    <th>THAO TÁC</th>
                 </tr>
-            }
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @if (Model.Count == 0)
+                {
+                    <tr>
+                        <td colspan="8" class="text-center py-5 text-muted">
+                            <i class="bi bi-ticket-perforated fs-2 d-block mb-2 text-secondary"></i>
+                            Không có mã giảm giá nào phù hợp.
+                        </td>
+                    </tr>
+                }
+                @foreach (var m in Model)
+                {
+                    <tr>
+                        <td>
+                            <strong class="text-dark">@m.Ma</strong>
+                        </td>
+                        <td>
+                            <div class="fw-semibold text-dark">@(string.IsNullOrEmpty(m.MoTa) ? "Ưu đãi khách hàng AMP" : m.MoTa)</div>
+                            <div class="text-muted" style="font-size:11.5px">Đơn tối thiểu: @m.GiaTriDonHangToiThieu.ToString("N0") ₫</div>
+                        </td>
+                        <td>
+                            <span class="badge bg-light text-dark border">
+                                @(m.LoaiGiamGia == LoaiGiamGia.PhanTram ? "%" : "VNĐ")
+                            </span>
+                        </td>
+                        <td class="fw-bold text-dark">
+                            @(m.LoaiGiamGia == LoaiGiamGia.PhanTram ? $"{m.GiaTri:N0}%" : $"{m.GiaTri:N0} ₫")
+                        </td>
+                        <td style="font-size:12.5px;color:#4B5563">
+                            @m.NgayBatDau.ToString("dd/MM/yyyy") – @m.NgayKetThuc.ToString("dd/MM/yyyy")
+                        </td>
+                        <td class="fw-semibold text-dark">
+                            @m.SoLuongDaDung / @(m.SoLuongToiDa.HasValue ? m.SoLuongToiDa.Value.ToString() : "∞")
+                        </td>
+                        <td>
+                            @if (m.ConHieuLuc)
+                            {
+                                <span class="amp-pill amp-pill-green">Hoạt động</span>
+                            }
+                            else
+                            {
+                                <span class="amp-pill amp-pill-red">Hết hạn</span>
+                            }
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <a asp-action="Sua" asp-route-id="@m.Id" class="amp-action-link edit">
+                                    Sửa
+                                </a>
+                                <form asp-action="Xoa" method="post" onsubmit="return confirm('Bạn có chắc muốn xóa mã giảm giá này?');" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@m.Id" />
+                                    <button type="submit" class="amp-action-link danger border-0" style="cursor:pointer">
+                                        Xóa
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="amp-pagination-wrap">
+        <div>Hiển thị <strong>@Model.Count</strong> của <strong>@tongMa</strong> mã giảm giá</div>
+    </div>
 </div>

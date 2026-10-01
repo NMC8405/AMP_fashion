@@ -43,6 +43,11 @@ namespace AMPFashionStore.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DangKy(DangKyViewModel model)
         {
+            if (!model.DongYDieuKhoan)
+            {
+                ModelState.AddModelError(nameof(model.DongYDieuKhoan), "Vui lòng chọn chấp nhận Điều khoản dịch vụ và Chính sách bảo mật để tiếp tục.");
+            }
+
             if (!ModelState.IsValid) return View(model);
 
             var daTonTai = await _db.NguoiDungs.AnyAsync(n => n.Email == model.Email);

@@ -2,84 +2,165 @@
 @{
     ViewData["Title"] = "Quản lý sản phẩm";
     var danhMucs = ViewBag.DanhMucs as List<DanhMuc> ?? new();
+    string trangThai = ViewBag.TrangThai ?? "";
+    int trang = ViewBag.Trang ?? 1;
+    int tongTrang = ViewBag.TongTrang ?? 1;
+    int tongSo = ViewBag.TongSo ?? Model.Count;
 }
-<div class="amp-table-toolbar">
-    <form method="get" class="d-flex gap-2 flex-wrap">
-        <input type="text" name="tuKhoa" value="@ViewBag.TuKhoa" class="form-control" placeholder="Tìm theo tên sản phẩm..." style="width:240px" />
-        <select name="danhMucId" class="form-select" style="width:180px" onchange="this.form.submit()">
-            <option value="">Tất cả danh mục</option>
+
+<!-- FILTER & ACTION BAR (FIGMA STYLE) -->
+<div class="amp-action-bar">
+    <form method="get" class="d-flex align-items-center gap-3 flex-wrap flex-grow-1">
+        <div class="amp-search-box">
+            <i class="bi bi-search"></i>
+            <input type="text" name="tuKhoa" value="@ViewBag.TuKhoa" placeholder="Tìm kiếm sản phẩm..." />
+        </div>
+
+        <select name="danhMucId" class="amp-select-filter" onchange="this.form.submit()">
+            <option value="">Danh mục: Tất cả</option>
             @foreach (var dm in danhMucs)
             {
                 <option value="@dm.Id" selected="@(ViewBag.DanhMucId == dm.Id)">@dm.TenDanhMuc</option>
             }
         </select>
-        <button type="submit" class="amp-btn amp-btn-outline">Lọc</button>
+
+        <select name="trangThai" class="amp-select-filter" onchange="this.form.submit()">
+            <option value="">Trạng thái: Tất cả</option>
+            <option value="dang_ban" selected="@(trangThai == "dang_ban")">Đang bán</option>
+            <option value="sap_het" selected="@(trangThai == "sap_het")">Sắp hết hàng</option>
+            <option value="het_hang" selected="@(trangThai == "het_hang")">Hết hàng</option>
+            <option value="ngung_ban" selected="@(trangThai == "ngung_ban")">Ngừng bán</option>
+        </select>
     </form>
-    <a asp-action="Them" class="amp-btn amp-btn-primary"><i class="bi bi-plus-lg me-1"></i>Thêm sản phẩm</a>
+
+    <a asp-action="Them" class="amp-btn-dark-pill shadow-sm">
+        <i class="bi bi-plus-lg"></i> Thêm sản phẩm
+    </a>
 </div>
 
-<div class="amp-table-card">
-    <table class="amp-table">
-        <thead>
-            <tr>
-                <th></th><th>Tên sản phẩm</th><th>Danh mục</th><th>Giá</th><th>Tồn kho</th><th>Trạng thái</th><th></th>
-            </tr>
-        </thead>
-        <tbody>
-            @if (Model.Count == 0)
-            {
-                <tr><td colspan="7" class="text-center text-muted py-4">Không có sản phẩm nào.</td></tr>
-            }
-            @foreach (var sp in Model)
-            {
+<!-- PRODUCTS TABLE CARD -->
+<div class="amp-box-card">
+    <div class="table-responsive">
+        <table class="amp-table-modern">
+            <thead>
                 <tr>
-                    <td><img src="@sp.HinhAnhChinh" class="amp-thumb-sm" /></td>
-                    <td>@sp.TenSanPham</td>
-                    <td>@sp.DanhMuc?.TenDanhMuc</td>
-                    <td>
-                        @sp.GiaHienThi.ToString("N0")₫
-                        @if (sp.DangGiamGia)
-                        {
-                            <div><del style="color:var(--amp-muted-light);font-size:11.5px">@sp.GiaGoc.ToString("N0")₫</del></div>
-                        }
-                    </td>
-                    <td>@sp.TongSoLuongTon</td>
-                    <td>
-                        @if (sp.TrangThaiHienThi)
-                        {
-                            <span class="amp-status amp-status-da-giao">Đang hiển thị</span>
-                        }
-                        else
-                        {
-                            <span class="amp-status amp-status-da-huy">Đã ẩn</span>
-                        }
-                    </td>
-                    <td>
-                        <div class="d-flex gap-1">
-                            <a asp-action="Sua" asp-route-id="@sp.Id" class="amp-btn amp-btn-outline amp-btn-sm">Sửa</a>
-                            <form asp-action="AnHien" method="post">
-                                <input type="hidden" name="id" value="@sp.Id" />
-                                <button type="submit" class="amp-btn amp-btn-outline amp-btn-sm">@(sp.TrangThaiHienThi ? "Ẩn" : "Hiện")</button>
-                            </form>
-                            <form asp-action="Xoa" method="post" onsubmit="return confirm('Xóa sản phẩm này?')">
-                                <input type="hidden" name="id" value="@sp.Id" />
-                                <button type="submit" class="amp-btn amp-btn-danger amp-btn-sm">Xóa</button>
-                            </form>
-                        </div>
-                    </td>
+                    <th>HÌNH ẢNH</th>
+                    <th>TÊN SẢN PHẨM</th>
+                    <th>DANH MỤC</th>
+                    <th>GIÁ</th>
+                    <th>TỒN KHO</th>
+                    <th>TRẠNG THÁI</th>
+                    <th>THAO TÁC</th>
                 </tr>
-            }
-        </tbody>
-    </table>
-</div>
+            </thead>
+            <tbody>
+                @if (Model.Count == 0)
+                {
+                    <tr>
+                        <td colspan="7" class="text-center py-5 text-muted">
+                            <i class="bi bi-box2 fs-2 d-block mb-2 text-secondary"></i>
+                            Không tìm thấy sản phẩm nào theo điều kiện lọc.
+                        </td>
+                    </tr>
+                }
+                @foreach (var sp in Model)
+                {
+                    var tonKho = sp.TongSoLuongTon;
+                    <tr>
+                        <td>
+                            <img src="@(string.IsNullOrEmpty(sp.HinhAnhChinh) ? "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=200&auto=format&fit=crop" : sp.HinhAnhChinh)" 
+                                 class="amp-prod-thumb" alt="@sp.TenSanPham" />
+                        </td>
+                        <td>
+                            <div class="fw-bold text-dark">@sp.TenSanPham</div>
+                            <div class="text-muted" style="font-size:11.5px">Mã: AMP-@sp.Id.ToString("D3") | @sp.ThuongHieu</div>
+                        </td>
+                        <td>
+                            <span class="text-secondary fw-semibold">@(sp.DanhMuc?.TenDanhMuc ?? "Chưa phân loại")</span>
+                        </td>
+                        <td>
+                            <div class="fw-bold text-dark">@sp.GiaHienThi.ToString("N0") ₫</div>
+                            @if (sp.DangGiamGia)
+                            {
+                                <div class="text-muted text-decoration-line-through" style="font-size:11.5px">@sp.GiaGoc.ToString("N0") ₫</div>
+                            }
+                        </td>
+                        <td class="fw-bold text-dark">
+                            @tonKho
+                        </td>
+                        <td>
+                            @if (!sp.TrangThaiHienThi)
+                            {
+                                <span class="amp-pill amp-pill-gray">Ngừng bán</span>
+                            }
+                            else if (tonKho == 0)
+                            {
+                                <span class="amp-pill amp-pill-red">Hết hàng</span>
+                            }
+                            else if (tonKho <= 5)
+                            {
+                                <span class="amp-pill amp-pill-orange">Sắp hết hàng</span>
+                            }
+                            else
+                            {
+                                <span class="amp-pill amp-pill-green">Đang bán</span>
+                            }
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <a asp-area="" asp-controller="SanPham" asp-action="ChiTiet" asp-route-id="@sp.Id" target="_blank" class="amp-action-link view">
+                                    Xem
+                                </a>
+                                <a asp-action="Sua" asp-route-id="@sp.Id" class="amp-action-link edit">
+                                    Sửa
+                                </a>
+                                <form asp-action="Xoa" method="post" onsubmit="return confirm('Bạn có chắc chắn muốn xóa sản phẩm \'@sp.TenSanPham\'?');" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@sp.Id" />
+                                    <button type="submit" class="amp-action-link danger border-0" style="cursor:pointer">
+                                        Xóa
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
 
-@{ int trang = ViewBag.Trang; int tongTrang = ViewBag.TongTrang; }
-@if (tongTrang > 1)
-{
-    <div class="amp-pagination">
-        @for (int i = 1; i <= tongTrang; i++)
+    <!-- PAGINATION (FIGMA STYLE) -->
+    <div class="amp-pagination-wrap">
+        <div>
+            Hiển thị <strong>@Model.Count</strong> của <strong>@tongSo</strong> sản phẩm
+        </div>
+        @if (tongTrang > 1)
         {
-            <a href="@Url.Action("DanhSach", new { tuKhoa = ViewBag.TuKhoa, danhMucId = ViewBag.DanhMucId, trang = i })" class="@(i == trang ? "active" : "")">@i</a>
+            <ul class="amp-pagination">
+                @if (trang > 1)
+                {
+                    <li><a href="@Url.Action("DanhSach", new { tuKhoa = ViewBag.TuKhoa, danhMucId = ViewBag.DanhMucId, trangThai = trangThai, trang = trang - 1 })">&lsaquo;</a></li>
+                }
+                @for (int i = 1; i <= tongTrang; i++)
+                {
+                    if (i == trang)
+                    {
+                        <li class="active"><span>@i</span></li>
+                    }
+                    else if (i == 1 || i == tongTrang || (i >= trang - 1 && i <= trang + 1))
+                    {
+                        <li><a href="@Url.Action("DanhSach", new { tuKhoa = ViewBag.TuKhoa, danhMucId = ViewBag.DanhMucId, trangThai = trangThai, trang = i })">@i</a></li>
+                    }
+                    else if (i == trang - 2 || i == trang + 2)
+                    {
+                        <li><span>...</span></li>
+                    }
+                }
+                @if (trang < tongTrang)
+                {
+                    <li><a href="@Url.Action("DanhSach", new { tuKhoa = ViewBag.TuKhoa, danhMucId = ViewBag.DanhMucId, trangThai = trangThai, trang = trang + 1 })">&rsaquo;</a></li>
+                }
+            </ul>
         }
     </div>
-}
+</div>

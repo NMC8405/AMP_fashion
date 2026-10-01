@@ -20,7 +20,7 @@ namespace AMPFashionStore.Areas.QuanLy.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> DanhSach(string? tuKhoa, int? danhMucId, int trang = 1)
+        public async Task<IActionResult> DanhSach(string? tuKhoa, int? danhMucId, string? trangThai, int trang = 1)
         {
             var query = _db.SanPhams.Include(s => s.DanhMuc).Include(s => s.BienThes).AsQueryable();
 
@@ -28,6 +28,18 @@ namespace AMPFashionStore.Areas.QuanLy.Controllers
                 query = query.Where(s => s.TenSanPham.ToLower().Contains(tuKhoa.Trim().ToLower()));
             if (danhMucId.HasValue)
                 query = query.Where(s => s.DanhMucId == danhMucId.Value);
+
+            if (!string.IsNullOrWhiteSpace(trangThai))
+            {
+                if (trangThai == "dang_ban")
+                    query = query.Where(s => s.TrangThaiHienThi && s.BienThes.Sum(b => b.SoLuongTon) > 5);
+                else if (trangThai == "sap_het")
+                    query = query.Where(s => s.TrangThaiHienThi && s.BienThes.Sum(b => b.SoLuongTon) > 0 && s.BienThes.Sum(b => b.SoLuongTon) <= 5);
+                else if (trangThai == "het_hang")
+                    query = query.Where(s => s.TrangThaiHienThi && s.BienThes.Sum(b => b.SoLuongTon) == 0);
+                else if (trangThai == "ngung_ban")
+                    query = query.Where(s => !s.TrangThaiHienThi);
+            }
 
             var tongSo = await query.CountAsync();
             var tongTrang = Math.Max(1, (int)Math.Ceiling(tongSo / (double)SoDongMoiTrang));
@@ -39,6 +51,7 @@ namespace AMPFashionStore.Areas.QuanLy.Controllers
             ViewBag.DanhMucs = await _db.DanhMucs.OrderBy(d => d.TenDanhMuc).ToListAsync();
             ViewBag.TuKhoa = tuKhoa;
             ViewBag.DanhMucId = danhMucId;
+            ViewBag.TrangThai = trangThai;
             ViewBag.Trang = trang;
             ViewBag.TongTrang = tongTrang;
             ViewBag.TongSo = tongSo;

@@ -8,6 +8,7 @@ namespace AMPFashionStore.ViewModels
         public List<GioHangItem> DongSanPhams { get; set; } = new();
         public decimal TongTien => DongSanPhams.Sum(x => x.ThanhTien);
         public int TongSoLuong => DongSanPhams.Sum(x => x.SoLuong);
+        public int TongSoLoai => DongSanPhams.Count;
     }
 
     /// <summary>UC07: request thêm sản phẩm vào giỏ hàng (submit từ trang chi tiết sản phẩm).</summary>

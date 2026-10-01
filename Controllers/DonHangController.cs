@@ -27,21 +27,30 @@ namespace AMPFashionStore.Controllers
         // ================= Bắt đầu thanh toán từ giỏ hàng =================
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> BatDauThanhToan()
+        public async Task<IActionResult> BatDauThanhToan(List<int>? selectedItemIds = null, string? maGiamGia = null)
         {
             var userId = User.GetUserId();
-            var items = await _db.GioHangItems
-                .Where(g => g.NguoiDungId == userId)
+            var query = _db.GioHangItems.Where(g => g.NguoiDungId == userId);
+            if (selectedItemIds != null && selectedItemIds.Count > 0)
+            {
+                query = query.Where(g => selectedItemIds.Contains(g.Id));
+            }
+
+            var items = await query
                 .Select(g => new DongCheckout { BienTheSanPhamId = g.BienTheSanPhamId, SoLuong = g.SoLuong })
                 .ToListAsync();
 
             if (items.Count == 0)
             {
-                TempData["Loi"] = "Giỏ hàng của bạn đang trống.";
+                TempData["Loi"] = "Vui lòng chọn ít nhất một sản phẩm để thanh toán.";
                 return RedirectToAction("Index", "GioHang");
             }
 
             HttpContext.Session.SetObject("CheckoutItems", items);
+            if (!string.IsNullOrWhiteSpace(maGiamGia))
+            {
+                TempData["MaGiamGiaGioHang"] = maGiamGia.Trim();
+            }
             return RedirectToAction(nameof(ThanhToan));
         }
 
@@ -57,6 +66,10 @@ namespace AMPFashionStore.Controllers
             }
 
             var user = await _db.NguoiDungs.FindAsync(User.GetUserId());
+            var phiVanChuyen = tamTinh >= NguongMienPhiVanChuyen ? 0 : PhiVanChuyenMacDinh;
+            var maGiamGiaStr = TempData["MaGiamGiaGioHang"] as string;
+            var (maHopLe, thongBaoMa, soTienGiam, _) = await KiemTraMaGiamGiaAsync(maGiamGiaStr, tamTinh);
+
             var model = new ThanhToanViewModel
             {
                 TenNguoiNhan = user?.HoTen ?? "",
@@ -64,7 +77,11 @@ namespace AMPFashionStore.Controllers
                 DiaChiNhan = user?.DiaChi ?? "",
                 DongHang = donHang,
                 TamTinh = tamTinh,
-                PhiVanChuyen = tamTinh >= NguongMienPhiVanChuyen ? 0 : PhiVanChuyenMacDinh
+                PhiVanChuyen = phiVanChuyen,
+                MaGiamGia = maHopLe ? maGiamGiaStr : null,
+                MaHopLe = maHopLe,
+                ThongBaoMa = thongBaoMa,
+                SoTienGiamGia = soTienGiam
             };
             return View(model);
         }
@@ -99,6 +116,7 @@ namespace AMPFashionStore.Controllers
 
             var userId = User.GetUserId();
             var maDonHang = "DH" + DateTime.Now.ToString("yyyyMMddHHmmss") + Random.Shared.Next(10, 99);
+            var tongTien = Math.Max(0, tamTinh + model.PhiVanChuyen - soTienGiam);
 
             var donHangMoi = new DonHang
             {
@@ -117,6 +135,7 @@ namespace AMPFashionStore.Controllers
                 TamTinh = tamTinh,
                 PhiVanChuyen = model.PhiVanChuyen,
                 SoTienGiamGia = soTienGiam,
+                TongTien = tongTien,
                 MaGiamGiaId = maGiamGia?.Id,
                 ChiTietDonHangs = donHang
             };
@@ -174,6 +193,14 @@ namespace AMPFashionStore.Controllers
 
             if (!maGiamGia.ConHieuLuc)
                 return (false, "Mã giảm giá đã hết hạn hoặc đã sử dụng hết lượt.", 0, null);
+
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                var userId = User.GetUserId();
+                var daDung = await _db.DonHangs.AnyAsync(d => d.NguoiDungId == userId && d.MaGiamGiaId == maGiamGia.Id && d.TrangThaiDonHang != TrangThaiDonHang.DaHuy);
+                if (daDung)
+                    return (false, "Bạn đã sử dụng mã giảm giá này cho một đơn hàng trước đó. Mỗi tài khoản chỉ được sử dụng một lần.", 0, null);
+            }
 
             if (tamTinh < maGiamGia.GiaTriDonHangToiThieu)
                 return (false, $"Đơn hàng cần tối thiểu {maGiamGia.GiaTriDonHangToiThieu:N0}đ để áp dụng mã này.", 0, null);
@@ -251,6 +278,15 @@ namespace AMPFashionStore.Controllers
                 .Where(dg => dg.DonHangId == id)
                 .Select(dg => dg.SanPhamId)
                 .ToListAsync();
+
+            if (don.PhuongThucThanhToan == PhuongThucThanhToan.ChuyenKhoanNganHang
+                && don.TrangThaiThanhToan == TrangThaiThanhToan.ChuaThanhToan
+                && don.TrangThaiDonHang != TrangThaiDonHang.DaHuy)
+            {
+                var noiDung = $"{don.MaDonHang}";
+                ViewBag.QrUrl = _bankSettings.TaoLinkQr(don.TongTien, noiDung);
+                ViewBag.BankSettings = _bankSettings;
+            }
 
             return View(don);
         }
@@ -338,6 +374,16 @@ namespace AMPFashionStore.Controllers
             {
                 don.TrangThaiThanhToan = TrangThaiThanhToan.DaHoanTien;
                 thongBaoHoanTien = " Đơn hàng đã thanh toán trong vòng 24 giờ, số tiền sẽ được hoàn lại cho bạn theo chính sách hoàn tiền.";
+            }
+
+            // Hoàn lại lượt dùng mã giảm giá nếu đơn có áp dụng
+            if (don.MaGiamGiaId.HasValue)
+            {
+                var mg = await _db.MaGiamGias.FindAsync(don.MaGiamGiaId.Value);
+                if (mg != null && mg.SoLuongDaDung > 0)
+                {
+                    mg.SoLuongDaDung--;
+                }
             }
 
             await _db.SaveChangesAsync();

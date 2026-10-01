@@ -5,11 +5,20 @@
 @{
     var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
     var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+
+    bool isBoSuuTap = string.Equals(currentController, "SanPham", StringComparison.OrdinalIgnoreCase)
+                   && string.Equals(currentAction, "BoSuuTap", StringComparison.OrdinalIgnoreCase);
+    bool isKhuyenMai = string.Equals(currentController, "Home", StringComparison.OrdinalIgnoreCase)
+                    && string.Equals(currentAction, "KhuyenMai", StringComparison.OrdinalIgnoreCase);
+    bool isHome = string.Equals(currentController, "Home", StringComparison.OrdinalIgnoreCase) && !isKhuyenMai;
+    bool isSanPham = string.Equals(currentController, "SanPham", StringComparison.OrdinalIgnoreCase) && !isBoSuuTap;
+    bool isLienHe = string.Equals(currentController, "LienHe", StringComparison.OrdinalIgnoreCase);
+
     int soLuongGio = 0, soLuongYeuThich = 0;
     if (User.Identity?.IsAuthenticated == true)
     {
         var uid = User.GetUserId();
-        soLuongGio = await Db.GioHangItems.Where(g => g.NguoiDungId == uid).SumAsync(g => (int?)g.SoLuong) ?? 0;
+        soLuongGio = await Db.GioHangItems.Where(g => g.NguoiDungId == uid).CountAsync();
         soLuongYeuThich = await Db.YeuThichs.CountAsync(y => y.NguoiDungId == uid);
     }
 }
@@ -28,19 +37,17 @@
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body>
-    <div class="amp-header-top">MIỄN PHÍ VẬN CHUYỂN CHO ĐƠN TỪ 500.000₫ · HOTLINE 1900 6006</div>
-
     <header class="amp-header">
         <div class="amp-container amp-header-inner">
             <button class="amp-mobile-toggle" type="button" aria-label="Menu"><i class="bi bi-list"></i></button>
             <a asp-controller="Home" asp-action="Index" class="amp-logo">AMP</a>
 
             <nav class="amp-nav">
-                <a asp-controller="Home" asp-action="Index" class="@(currentController == "Home" ? "active" : "")">Trang chủ</a>
-                <a asp-controller="SanPham" asp-action="DanhSach" class="@(currentController == "SanPham" ? "active" : "")">Sản phẩm</a>
-                <a asp-controller="SanPham" asp-action="BoSuuTap" class="@(currentController == "SanPham" && currentAction == "BoSuuTap" ? "active" : "")">Bộ sưu tập</a>
-                <a asp-controller="Home" asp-action="KhuyenMai" class="@(currentController == "Home" && currentAction == "KhuyenMai" ? "active" : "")">Khuyến mãi</a>
-                <a asp-controller="LienHe" asp-action="Index" class="@(currentController == "LienHe" ? "active" : "")">Liên hệ</a>
+                <a asp-controller="Home" asp-action="Index" class="@(isHome ? "active" : "")">Trang chủ</a>
+                <a asp-controller="SanPham" asp-action="DanhSach" class="@(isSanPham ? "active" : "")">Sản phẩm</a>
+                <a asp-controller="SanPham" asp-action="BoSuuTap" class="@(isBoSuuTap ? "active" : "")">Bộ sưu tập</a>
+                <a asp-controller="Home" asp-action="KhuyenMai" class="@(isKhuyenMai ? "active" : "")">Khuyến mãi</a>
+                <a asp-controller="LienHe" asp-action="Index" class="@(isLienHe ? "active" : "")">Liên hệ</a>
             </nav>
 
             <div class="amp-icons">

@@ -15,6 +15,8 @@
     initPayOptions();
     initAdminSidebar();
     initAutoDismissAlerts();
+    initWishlistToggle();
+    initNewsletter();
   });
 
   // ---------- Mobile nav ----------
@@ -246,5 +248,119 @@
         setTimeout(function () { el.remove(); }, 400);
       }, 5000);
     });
+  }
+
+  // ---------- Yêu thích sản phẩm (AJAX toggle) ----------
+  function initWishlistToggle() {
+    document.addEventListener("submit", function (e) {
+      var form = e.target;
+      if (!form.classList.contains("amp-wish-form")) return;
+      e.preventDefault();
+
+      var btn = form.querySelector(".amp-wish-btn");
+      var formData = new FormData(form);
+
+      fetch(form.action, {
+        method: "POST",
+        body: formData,
+        headers: {
+          "X-Requested-With": "XMLHttpRequest",
+          "Accept": "application/json"
+        }
+      })
+      .then(function (res) {
+        if (res.redirected) {
+          window.location.href = res.url;
+          return;
+        }
+        return res.json();
+      })
+      .then(function (data) {
+        if (!data || !data.success) return;
+        var daYeuThich = data.daYeuThich;
+        if (btn) {
+          btn.classList.toggle("active", daYeuThich);
+          btn.title = daYeuThich ? "Bỏ yêu thích" : "Yêu thích";
+          var icon = btn.querySelector("i");
+          if (icon) {
+            icon.className = "bi " + (daYeuThich ? "bi-heart-fill" : "bi-heart");
+          }
+        }
+        if (daYeuThich) {
+          form.action = "/YeuThich/Xoa";
+        } else {
+          form.action = "/YeuThich/Them";
+        }
+
+        var wishBadge = document.querySelector('a[href*="YeuThich"] .amp-icon-badge');
+        if (data.count > 0) {
+          if (!wishBadge) {
+            var wishLink = document.querySelector('a[href*="YeuThich"]');
+            if (wishLink) {
+              wishBadge = document.createElement("span");
+              wishBadge.className = "amp-icon-badge";
+              wishLink.appendChild(wishBadge);
+            }
+          }
+          if (wishBadge) wishBadge.textContent = data.count;
+        } else if (wishBadge) {
+          wishBadge.remove();
+        }
+      })
+      .catch(function () {
+        form.submit();
+      });
+    });
+  }
+
+  // ---------- Đăng ký nhận tin ưu đãi ----------
+  function initNewsletter() {
+    var section = document.getElementById("section-newsletter");
+    if (!section) return;
+
+    if (localStorage.getItem("amp_newsletter_subscribed") === "true") {
+      section.style.display = "none";
+      return;
+    }
+
+    var form = section.querySelector("form");
+    if (!form) return;
+
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var input = form.querySelector('input[type="email"]') || form.querySelector("input");
+      if (!input) return;
+      var email = input.value.trim();
+      var emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+      if (!emailRegex.test(email)) {
+        alert("Vui lòng nhập đúng định dạng email (ví dụ: example@gmail.com).");
+        input.focus();
+        return;
+      }
+
+      localStorage.setItem("amp_newsletter_subscribed", "true");
+
+      var card = section.querySelector(".amp-surface-card");
+      if (card) {
+        card.style.borderColor = "#86efac";
+        card.style.background = "#f0fdf4";
+        card.innerHTML =
+          '<div style="font-size:42px;color:#16a34a;margin-bottom:12px"><i class="bi bi-check-circle-fill"></i></div>' +
+          '<h3 style="font-size:20px;font-weight:700;color:#166534;margin-bottom:8px">Đăng ký nhận tin thành công!</h3>' +
+          '<p style="font-size:14px;color:#15803d;max-width:480px;margin:0 auto">Cảm ơn bạn đã đăng ký. AMP sẽ gửi thông tin bộ sưu tập mới và ưu đãi độc quyền sớm nhất đến <strong>' +
+          escapeHtml(email) +
+          '</strong>.</p>';
+        setTimeout(function () {
+          card.style.transition = "opacity .6s ease, transform .6s ease";
+          card.style.opacity = "0";
+          card.style.transform = "translateY(-10px)";
+          setTimeout(function () { section.style.display = "none"; }, 600);
+        }, 4000);
+      }
+    });
+  }
+
+  function escapeHtml(str) {
+    return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   }
 })();

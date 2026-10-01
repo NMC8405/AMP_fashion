@@ -51,7 +51,12 @@ namespace AMPFashionStore.Models
         public decimal PhiVanChuyen { get; set; }
 
         [Column(TypeName = "decimal(18,0)")]
-        public decimal TongTien { get; set; }
+        public decimal TongTien
+        {
+            get => _tongTien > 0 ? _tongTien : Math.Max(0, TamTinh + PhiVanChuyen - SoTienGiamGia);
+            set => _tongTien = value;
+        }
+        private decimal _tongTien;
 
         public int? MaGiamGiaId { get; set; }
         public MaGiamGia? MaGiamGiaApDung { get; set; }

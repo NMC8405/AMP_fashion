@@ -26,6 +26,12 @@ namespace AMPFashionStore.Models
         public string NoiDung { get; set; } = string.Empty;
 
         public DateTime NgayDanhGia { get; set; } = DateTime.Now;
+
+        [StringLength(1000)]
+        [Display(Name = "Phản hồi từ cửa hàng")]
+        public string? PhanHoi { get; set; }
+
+        public DateTime? NgayPhanHoi { get; set; }
     }
 
     /// <summary>Sản phẩm yêu thích của người dùng (UC32/UC33).</summary>
@@ -54,6 +60,7 @@ namespace AMPFashionStore.Models
 
         [Required(ErrorMessage = "Vui lòng nhập email")]
         [EmailAddress(ErrorMessage = "Email không đúng định dạng")]
+        [RegularExpression(@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", ErrorMessage = "Email không đúng định dạng (ví dụ: example@gmail.com)")]
         [StringLength(150)]
         public string Email { get; set; } = string.Empty;
 

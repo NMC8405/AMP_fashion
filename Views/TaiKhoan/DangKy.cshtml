@@ -37,11 +37,14 @@
                 <input asp-for="XacNhanMatKhau" class="form-control" placeholder="Nhập lại mật khẩu" />
                 <span asp-validation-for="XacNhanMatKhau" class="text-danger"></span>
             </div>
-            <div class="form-check mb-3">
-                <input type="checkbox" class="form-check-input" id="dongY" required />
+            <div class="form-check mb-2">
+                <input type="checkbox" asp-for="DongYDieuKhoan" class="form-check-input" id="dongY" />
                 <label class="form-check-label" for="dongY" style="font-size:13px">
                     Tôi đồng ý với <a href="#" class="amp-link">Điều khoản dịch vụ</a> và <a href="#" class="amp-link">Chính sách bảo mật</a> của AMP.
                 </label>
+            </div>
+            <div class="mb-3">
+                <span asp-validation-for="DongYDieuKhoan" class="text-danger" style="font-size:12.5px"></span>
             </div>
             <button type="submit" class="amp-btn amp-btn-primary amp-btn-block">Đăng ký</button>
         </form>

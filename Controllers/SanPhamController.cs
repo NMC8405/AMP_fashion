@@ -42,6 +42,26 @@ namespace AMPFashionStore.Controllers
             if (chiGiamGia)
                 query = query.Where(s => s.GiaKhuyenMai != null && s.GiaKhuyenMai < s.GiaGoc);
 
+            const decimal MaxGiaChoPhep = 100_000_000m; // Giới hạn tối đa định mức (100.000.000đ)
+            if (giaTu.HasValue)
+            {
+                if (giaTu.Value < 0) giaTu = 0;
+                else if (giaTu.Value > MaxGiaChoPhep) giaTu = MaxGiaChoPhep;
+            }
+
+            if (giaDen.HasValue)
+            {
+                if (giaDen.Value < 0) giaDen = 0;
+                else if (giaDen.Value > MaxGiaChoPhep) giaDen = MaxGiaChoPhep;
+            }
+
+            if (giaTu.HasValue && giaDen.HasValue && giaTu.Value > giaDen.Value)
+            {
+                var temp = giaTu;
+                giaTu = giaDen;
+                giaDen = temp;
+            }
+
             if (giaTu.HasValue)
                 query = query.Where(s => (s.GiaKhuyenMai ?? s.GiaGoc) >= giaTu.Value);
 

@@ -59,6 +59,7 @@ namespace AMPFashionStore.Data
             if (await db.DanhMucs.AnyAsync())
             {
                 await CapNhatAnhThoiTrangThatAsync(db);
+                await SeedThemDuLieuFigmaAsync(db, hasher);
                 return;
             }
 
@@ -414,5 +415,229 @@ namespace AMPFashionStore.Data
                 }
             )
         };
+
+        private static async Task SeedThemDuLieuFigmaAsync(ApplicationDbContext db, PasswordHasher<NguoiDung> hasher)
+        {
+            // Seed thêm nhân viên chuẩn Figma nếu chưa có
+            if (!await db.NguoiDungs.AnyAsync(n => n.Email == "minhthuc@ampfashion.vn"))
+            {
+                var staffList = new List<NguoiDung>
+                {
+                    new NguoiDung { HoTen = "Lê Minh Thức", Email = "minhthuc@ampfashion.vn", SoDienThoai = "0901234567", VaiTro = VaiTro.QuanTriVien, TrangThai = TrangThaiTaiKhoan.HoatDong, NgayTao = DateTime.Today.AddDays(-120) },
+                    new NguoiDung { HoTen = "Nguyễn Ngọc Yến Nhi", Email = "yennhi@ampfashion.vn", SoDienThoai = "0902345678", VaiTro = VaiTro.QuanTriVien, TrangThai = TrangThaiTaiKhoan.HoatDong, NgayTao = DateTime.Today.AddDays(-100) },
+                    new NguoiDung { HoTen = "Tô Ngọc Châu", Email = "ngocchau@ampfashion.vn", SoDienThoai = "0903456789", VaiTro = VaiTro.NhanVien, TrangThai = TrangThaiTaiKhoan.HoatDong, NgayTao = DateTime.Today.AddDays(-90) },
+                    new NguoiDung { HoTen = "Hứa Châu Kha", Email = "chaukha@ampfashion.vn", SoDienThoai = "0904567890", VaiTro = VaiTro.NhanVien, TrangThai = TrangThaiTaiKhoan.HoatDong, NgayTao = DateTime.Today.AddDays(-80) },
+                    new NguoiDung { HoTen = "Đào Thanh Hòa", Email = "thanhhoa@ampfashion.vn", SoDienThoai = "0905678901", VaiTro = VaiTro.QuanTriVien, TrangThai = TrangThaiTaiKhoan.HoatDong, NgayTao = DateTime.Today.AddDays(-75) },
+                    new NguoiDung { HoTen = "Châu Ngọc Ẩn", Email = "ngocan@ampfashion.vn", SoDienThoai = "0906789012", VaiTro = VaiTro.NhanVien, TrangThai = TrangThaiTaiKhoan.HoatDong, NgayTao = DateTime.Today.AddDays(-60) },
+                    new NguoiDung { HoTen = "Trần Ngọc Nam Chi", Email = "namchi@ampfashion.vn", SoDienThoai = "0907890123", VaiTro = VaiTro.NhanVien, TrangThai = TrangThaiTaiKhoan.HoatDong, NgayTao = DateTime.Today.AddDays(-50) },
+                    new NguoiDung { HoTen = "Trần Trầm Châu", Email = "tramchau@ampfashion.vn", SoDienThoai = "0908901234", VaiTro = VaiTro.NhanVien, TrangThai = TrangThaiTaiKhoan.HoatDong, NgayTao = DateTime.Today.AddDays(-40) },
+                    new NguoiDung { HoTen = "Thới Yến", Email = "thoiyen@ampfashion.vn", SoDienThoai = "0909012345", VaiTro = VaiTro.NhanVien, TrangThai = TrangThaiTaiKhoan.HoatDong, NgayTao = DateTime.Today.AddDays(-30) },
+                    new NguoiDung { HoTen = "Nguyễn Tùng Hoàng", Email = "tunghoang@ampfashion.vn", SoDienThoai = "0909123456", VaiTro = VaiTro.NhanVien, TrangThai = TrangThaiTaiKhoan.HoatDong, NgayTao = DateTime.Today.AddDays(-20) }
+                };
+
+                foreach (var s in staffList)
+                {
+                    s.MatKhauHash = hasher.HashPassword(s, "123456");
+                    db.NguoiDungs.Add(s);
+                }
+                await db.SaveChangesAsync();
+            }
+
+            // Seed thêm khách hàng chuẩn Figma nếu chưa có
+            if (!await db.NguoiDungs.AnyAsync(n => n.Email == "xuantruong@gmail.com"))
+            {
+                var customers = new List<NguoiDung>
+                {
+                    new NguoiDung { HoTen = "Võ Xuân Trường", Email = "xuantruong@gmail.com", SoDienThoai = "0981112233", DiaChi = "45 Lê Duẩn, Quận 1, TP.HCM", VaiTro = VaiTro.KhachHang, TrangThai = TrangThaiTaiKhoan.HoatDong, NgayTao = DateTime.Today.AddDays(-110) },
+                    new NguoiDung { HoTen = "Lê Phương Thảo", Email = "phuongthao@gmail.com", SoDienThoai = "0982223344", DiaChi = "12 Trần Hưng Đạo, Quận 5, TP.HCM", VaiTro = VaiTro.KhachHang, TrangThai = TrangThaiTaiKhoan.HoatDong, NgayTao = DateTime.Today.AddDays(-85) },
+                    new NguoiDung { HoTen = "Nguyễn Ngọc Yến Nhi", Email = "yennhi_customer@gmail.com", SoDienThoai = "0983334455", DiaChi = "88 Hai Bà Trưng, Quận 3, TP.HCM", VaiTro = VaiTro.KhachHang, TrangThai = TrangThaiTaiKhoan.HoatDong, NgayTao = DateTime.Today.AddDays(-70) },
+                    new NguoiDung { HoTen = "Trần Hoài Nam", Email = "hoainam@gmail.com", SoDienThoai = "0984445566", DiaChi = "99 Nguyễn Oanh, Gò Vấp, TP.HCM", VaiTro = VaiTro.KhachHang, TrangThai = TrangThaiTaiKhoan.HoatDong, NgayTao = DateTime.Today.AddDays(-65) },
+                    new NguoiDung { HoTen = "Lê Khải Phong", Email = "khaiphong@gmail.com", SoDienThoai = "0985556677", DiaChi = "15 Nguyễn Trãi, Quận 1, TP.HCM", VaiTro = VaiTro.KhachHang, TrangThai = TrangThaiTaiKhoan.HoatDong, NgayTao = DateTime.Today.AddDays(-55) },
+                    new NguoiDung { HoTen = "Châu Ngọc Ẩn", Email = "ngocan_customer@gmail.com", SoDienThoai = "0986667788", DiaChi = "33 Cách Mạng Tháng 8, Quận 10, TP.HCM", VaiTro = VaiTro.KhachHang, TrangThai = TrangThaiTaiKhoan.HoatDong, NgayTao = DateTime.Today.AddDays(-45) }
+                };
+
+                foreach (var c in customers)
+                {
+                    c.MatKhauHash = hasher.HashPassword(c, "123456");
+                    db.NguoiDungs.Add(c);
+                }
+                await db.SaveChangesAsync();
+            }
+
+            // Seed đơn hàng mẫu nếu chưa có
+            if (!await db.DonHangs.AnyAsync())
+            {
+                var customers = await db.NguoiDungs.Where(n => n.VaiTro == VaiTro.KhachHang).ToListAsync();
+                var products = await db.SanPhams.Include(s => s.BienThes).ToListAsync();
+
+                if (customers.Any() && products.Any())
+                {
+                    var c1 = customers[0];
+                    var p1 = products[0];
+                    var p2 = products.Count > 1 ? products[1] : products[0];
+
+                    var orders = new List<DonHang>
+                    {
+                        new DonHang
+                        {
+                            MaDonHang = "AMP260912",
+                            NguoiDungId = c1.Id,
+                            TenNguoiNhan = c1.HoTen,
+                            SoDienThoaiNhan = c1.SoDienThoai ?? "0981112233",
+                            DiaChiNhan = c1.DiaChi ?? "TP. Hồ Chí Minh",
+                            PhuongThucThanhToan = PhuongThucThanhToan.ThanhToanKhiNhanHang,
+                            TrangThaiThanhToan = TrangThaiThanhToan.DaThanhToan,
+                            TrangThaiDonHang = TrangThaiDonHang.DaGiao,
+                            NgayDat = DateTime.Today.AddDays(-8),
+                            TongTien = 2480000,
+                            ChiTietDonHangs = new List<ChiTietDonHang>
+                            {
+                                new ChiTietDonHang { SanPhamId = p1.Id, TenSanPham = p1.TenSanPham, DonGia = p1.GiaHienThi, SoLuong = 2, ThanhTien = p1.GiaHienThi * 2, HinhAnh = p1.HinhAnhChinh }
+                            }
+                        },
+                        new DonHang
+                        {
+                            MaDonHang = "AMP260913",
+                            NguoiDungId = customers.Count > 1 ? customers[1].Id : c1.Id,
+                            TenNguoiNhan = customers.Count > 1 ? customers[1].HoTen : "Nguyễn Ngọc Yến Nhi",
+                            SoDienThoaiNhan = "0983334455",
+                            DiaChiNhan = "Quận 3, TP.HCM",
+                            PhuongThucThanhToan = PhuongThucThanhToan.ChuyenKhoanNganHang,
+                            TrangThaiThanhToan = TrangThaiThanhToan.ChuaThanhToan,
+                            TrangThaiDonHang = TrangThaiDonHang.ChoXacNhan,
+                            NgayDat = DateTime.Today.AddDays(-2),
+                            TongTien = 2980000,
+                            ChiTietDonHangs = new List<ChiTietDonHang>
+                            {
+                                new ChiTietDonHang { SanPhamId = p2.Id, TenSanPham = p2.TenSanPham, DonGia = p2.GiaHienThi, SoLuong = 2, ThanhTien = p2.GiaHienThi * 2, HinhAnh = p2.HinhAnhChinh }
+                            }
+                        },
+                        new DonHang
+                        {
+                            MaDonHang = "AMP260914",
+                            NguoiDungId = customers.Count > 2 ? customers[2].Id : c1.Id,
+                            TenNguoiNhan = customers.Count > 2 ? customers[2].HoTen : "Lê Phương Thảo",
+                            SoDienThoaiNhan = "0982223344",
+                            DiaChiNhan = "Quận 1, TP.HCM",
+                            PhuongThucThanhToan = PhuongThucThanhToan.ThanhToanKhiNhanHang,
+                            TrangThaiThanhToan = TrangThaiThanhToan.ChuaThanhToan,
+                            TrangThaiDonHang = TrangThaiDonHang.DaXacNhan,
+                            NgayDat = DateTime.Today.AddDays(-3),
+                            TongTien = 2580000,
+                            ChiTietDonHangs = new List<ChiTietDonHang>
+                            {
+                                new ChiTietDonHang { SanPhamId = p1.Id, TenSanPham = p1.TenSanPham, DonGia = p1.GiaHienThi, SoLuong = 1, ThanhTien = p1.GiaHienThi, HinhAnh = p1.HinhAnhChinh }
+                            }
+                        },
+                        new DonHang
+                        {
+                            MaDonHang = "AMP260915",
+                            NguoiDungId = c1.Id,
+                            TenNguoiNhan = "Hồ Đăng Khoa",
+                            SoDienThoaiNhan = "0987778899",
+                            DiaChiNhan = "Bình Thạnh, TP.HCM",
+                            PhuongThucThanhToan = PhuongThucThanhToan.ThanhToanKhiNhanHang,
+                            TrangThaiThanhToan = TrangThaiThanhToan.DaThanhToan,
+                            TrangThaiDonHang = TrangThaiDonHang.DaGiao,
+                            NgayDat = DateTime.Today.AddDays(-1),
+                            TongTien = 2680000,
+                            ChiTietDonHangs = new List<ChiTietDonHang>
+                            {
+                                new ChiTietDonHang { SanPhamId = p2.Id, TenSanPham = p2.TenSanPham, DonGia = p2.GiaHienThi, SoLuong = 1, ThanhTien = p2.GiaHienThi, HinhAnh = p2.HinhAnhChinh }
+                            }
+                        },
+                        new DonHang
+                        {
+                            MaDonHang = "AMP260916",
+                            NguoiDungId = c1.Id,
+                            TenNguoiNhan = "Võ Xuân Trường",
+                            SoDienThoaiNhan = "0981112233",
+                            DiaChiNhan = "Quận 1, TP.HCM",
+                            PhuongThucThanhToan = PhuongThucThanhToan.ChuyenKhoanNganHang,
+                            TrangThaiThanhToan = TrangThaiThanhToan.ChuaThanhToan,
+                            TrangThaiDonHang = TrangThaiDonHang.DangGiao,
+                            NgayDat = DateTime.Today.AddDays(-1),
+                            TongTien = 2490000,
+                            ChiTietDonHangs = new List<ChiTietDonHang>
+                            {
+                                new ChiTietDonHang { SanPhamId = p1.Id, TenSanPham = p1.TenSanPham, DonGia = p1.GiaHienThi, SoLuong = 1, ThanhTien = p1.GiaHienThi, HinhAnh = p1.HinhAnhChinh }
+                            }
+                        }
+                    };
+
+                    db.DonHangs.AddRange(orders);
+                    await db.SaveChangesAsync();
+                }
+            }
+
+            // Seed đánh giá mẫu theo chuẩn Figma nếu chưa có
+            if (await db.DanhGias.CountAsync() < 4)
+            {
+                var deliveredOrder = await db.DonHangs.FirstOrDefaultAsync(d => d.TrangThaiDonHang == TrangThaiDonHang.DaGiao);
+                var user = await db.NguoiDungs.FirstOrDefaultAsync(u => u.VaiTro == VaiTro.KhachHang);
+                var spList = await db.SanPhams.Take(5).ToListAsync();
+
+                if (deliveredOrder != null && user != null && spList.Any())
+                {
+                    var reviews = new List<DanhGia>
+                    {
+                        new DanhGia
+                        {
+                            DonHangId = deliveredOrder.Id,
+                            NguoiDungId = user.Id,
+                            SanPhamId = spList[0].Id,
+                            SoSao = 5,
+                            NoiDung = "Form áo đẹp, đường may rất chỉn chu, chất liệu vải cao cấp mặc lên rất tôn dáng!",
+                            NgayDanhGia = DateTime.Today.AddDays(-2),
+                            PhanHoi = "Dạ AMP xin chân thành cảm ơn bạn đã yêu thích và tin tưởng sản phẩm của thương hiệu ạ!"
+                        },
+                        new DanhGia
+                        {
+                            DonHangId = deliveredOrder.Id,
+                            NguoiDungId = user.Id,
+                            SanPhamId = spList.Count > 1 ? spList[1].Id : spList[0].Id,
+                            SoSao = 4,
+                            NoiDung = "Giao hàng hơi chậm 2 ngày so với dự kiến. Túi da đẹp chuẩn phom dáng nhưng phục vụ của bên vận chuyển chưa tương xứng phân khúc.",
+                            NgayDanhGia = DateTime.Today.AddDays(-3),
+                            PhanHoi = null
+                        },
+                        new DanhGia
+                        {
+                            DonHangId = deliveredOrder.Id,
+                            NguoiDungId = user.Id,
+                            SanPhamId = spList.Count > 2 ? spList[2].Id : spList[0].Id,
+                            SoSao = 2,
+                            NoiDung = "Đường chỉ may ở tay áo hơi lỏng lẻo, vải mỏng hơn so với đợt trước mua. Cần thương hiệu kiểm tra lại chất lượng đầu ra.",
+                            NgayDanhGia = DateTime.Today.AddDays(-5),
+                            PhanHoi = null
+                        },
+                        new DanhGia
+                        {
+                            DonHangId = deliveredOrder.Id,
+                            NguoiDungId = user.Id,
+                            SanPhamId = spList.Count > 3 ? spList[3].Id : spList[0].Id,
+                            SoSao = 5,
+                            NoiDung = "Đơn hàng tuyệt cà là vời!!!!!! Chất lượng đỉnh chóp!",
+                            NgayDanhGia = DateTime.Today.AddDays(-6),
+                            PhanHoi = "Dạ cảm ơn bạn nhiều nhiều nha, chúc bạn luôn xinh đẹp cùng AMP ạ!"
+                        }
+                    };
+
+                    db.DanhGias.AddRange(reviews);
+                    await db.SaveChangesAsync();
+                }
+            }
+
+            // Tự động chuẩn hóa tổng tiền cho các đơn hàng cũ (nếu có đơn hàng nào lưu TongTien = 0 trong khi có TamTinh)
+            var donHangLoiTongTien = await db.DonHangs.Where(d => d.TongTien == 0 && d.TamTinh > 0).ToListAsync();
+            if (donHangLoiTongTien.Count > 0)
+            {
+                foreach (var d in donHangLoiTongTien)
+                {
+                    d.TongTien = Math.Max(0, d.TamTinh + d.PhiVanChuyen - d.SoTienGiamGia);
+                }
+                await db.SaveChangesAsync();
+            }
+        }
     }
 }

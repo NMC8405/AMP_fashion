@@ -70,6 +70,37 @@
                 </div>
             </div>
 
+            @if (ViewBag.QrUrl != null && ViewBag.BankSettings != null && Model.TrangThaiThanhToan == TrangThaiThanhToan.ChuaThanhToan && Model.TrangThaiDonHang != TrangThaiDonHang.DaHuy)
+            {
+                var bank = ViewBag.BankSettings as AMPFashionStore.Services.BankSettings;
+                <div class="amp-card mb-3" style="border: 2px dashed #059669; background: #f0fdf4;">
+                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                        <div>
+                            <h3 class="amp-heading-sm mb-1" style="color: #065f46;"><i class="bi bi-qr-code-scan me-2"></i>Thanh toán qua mã QR Ngân hàng</h3>
+                            <p style="font-size: 13px; color: #047857; margin: 0;">Quét mã VietQR dưới đây để thanh toán cho đơn hàng. Hệ thống sẽ xác nhận ngay sau khi nhận tiền.</p>
+                        </div>
+                        <span class="badge bg-success" style="font-size: 12px; padding: 6px 12px;">Đang chờ thanh toán</span>
+                    </div>
+                    <div class="row align-items-center g-4">
+                        <div class="col-md-4 text-center">
+                            <div style="background:#fff;padding:12px;border-radius:8px;display:inline-block;box-shadow:0 2px 8px rgba(0,0,0,0.08);border:1px solid #d1fae5">
+                                <img src="@ViewBag.QrUrl" alt="Mã QR thanh toán" style="max-width:180px;height:auto;display:block" />
+                            </div>
+                            <div style="font-size:11.5px;color:#065f46;margin-top:8px;font-weight:600"><i class="bi bi-camera me-1"></i>Mở App ngân hàng để quét</div>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="amp-bank-info" style="background:#fff;border-radius:8px;padding:16px;border:1px solid #d1fae5">
+                                <div class="d-flex justify-content-between py-1 border-bottom"><span class="text-muted">Ngân hàng</span><strong style="color:#111827">Vietcombank</strong></div>
+                                <div class="d-flex justify-content-between py-1 border-bottom"><span class="text-muted">Số tài khoản</span><strong style="color:#111827;font-family:monospace;font-size:14px">@bank?.AccountNumber</strong></div>
+                                <div class="d-flex justify-content-between py-1 border-bottom"><span class="text-muted">Chủ tài khoản</span><strong style="color:#111827">@bank?.AccountName</strong></div>
+                                <div class="d-flex justify-content-between py-1 border-bottom"><span class="text-muted">Số tiền thanh toán</span><strong style="color:#059669;font-size:15px">@Model.TongTien.ToString("N0")₫</strong></div>
+                                <div class="d-flex justify-content-between py-1"><span class="text-muted">Nội dung chuyển khoản</span><strong style="color:#dc2626;font-family:monospace;font-size:14px">@Model.MaDonHang</strong></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+
             <div class="amp-card mb-3">
                 <h2 class="amp-heading-sm mb-3">Thông tin nhận hàng</h2>
                 <div class="amp-summary-row"><span>Người nhận</span><span>@Model.TenNguoiNhan</span></div>

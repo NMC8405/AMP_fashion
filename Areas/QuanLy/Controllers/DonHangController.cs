@@ -23,8 +23,17 @@ namespace AMPFashionStore.Areas.QuanLy.Controllers
         {
             var query = _db.DonHangs.Include(d => d.NguoiDung).Include(d => d.ChiTietDonHangs).AsQueryable();
 
-            if (!string.IsNullOrEmpty(trangThai) && Enum.TryParse<TrangThaiDonHang>(trangThai, out var tt))
-                query = query.Where(d => d.TrangThaiDonHang == tt);
+            if (!string.IsNullOrEmpty(trangThai))
+            {
+                if (trangThai == "ChoXuLy")
+                {
+                    query = query.Where(d => d.TrangThaiDonHang == TrangThaiDonHang.ChoXacNhan || d.TrangThaiDonHang == TrangThaiDonHang.ChoThanhToan);
+                }
+                else if (Enum.TryParse<TrangThaiDonHang>(trangThai, out var tt))
+                {
+                    query = query.Where(d => d.TrangThaiDonHang == tt);
+                }
+            }
 
             if (!string.IsNullOrWhiteSpace(tuKhoa))
             {
@@ -47,13 +56,39 @@ namespace AMPFashionStore.Areas.QuanLy.Controllers
             ViewBag.TongTrang = tongTrang;
             ViewBag.TongSo = tongSo;
 
-            // Đếm nhanh số lượng theo từng trạng thái để hiển thị badge trên tab lọc
-            ViewBag.DemTheoTrangThai = await _db.DonHangs
-                .GroupBy(d => d.TrangThaiDonHang)
-                .Select(g => new { TrangThai = g.Key, SoLuong = g.Count() })
-                .ToDictionaryAsync(x => x.TrangThai, x => x.SoLuong);
+            // 4 thẻ trạng thái theo thiết kế Figma
+            ViewBag.CountChoXuLy = await _db.DonHangs.CountAsync(d => d.TrangThaiDonHang == TrangThaiDonHang.ChoXacNhan || d.TrangThaiDonHang == TrangThaiDonHang.ChoThanhToan);
+            ViewBag.CountDangXuLy = await _db.DonHangs.CountAsync(d => d.TrangThaiDonHang == TrangThaiDonHang.DaXacNhan);
+            ViewBag.CountDangGiao = await _db.DonHangs.CountAsync(d => d.TrangThaiDonHang == TrangThaiDonHang.DangGiao);
+            ViewBag.CountDaGiao = await _db.DonHangs.CountAsync(d => d.TrangThaiDonHang == TrangThaiDonHang.DaGiao);
 
             return View(donHangs);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CapNhatTrangThaiNhanh(int id, TrangThaiDonHang trangThaiMoi, string? returnUrl)
+        {
+            var don = await _db.DonHangs.FindAsync(id);
+            if (don == null) return NotFound();
+
+            don.TrangThaiDonHang = trangThaiMoi;
+            if (trangThaiMoi == TrangThaiDonHang.DaXacNhan && !don.NgayXacNhan.HasValue)
+            {
+                don.NgayXacNhan = DateTime.Now;
+            }
+            else if (trangThaiMoi == TrangThaiDonHang.DaGiao)
+            {
+                don.TrangThaiThanhToan = TrangThaiThanhToan.DaThanhToan;
+            }
+
+            await _db.SaveChangesAsync();
+            TempData["ThongBao"] = $"Đã cập nhật đơn hàng #{don.MaDonHang} sang trạng thái \"{don.TenTrangThai}\".";
+
+            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+                return Redirect(returnUrl);
+
+            return RedirectToAction(nameof(DanhSach));
         }
 
         [HttpGet]
