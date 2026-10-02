@@ -48,9 +48,15 @@ namespace AMPFashionStore.Controllers
                 ModelState.AddModelError(nameof(model.DongYDieuKhoan), "Vui lòng chọn chấp nhận Điều khoản dịch vụ và Chính sách bảo mật để tiếp tục.");
             }
 
+            var emailNormalized = model.Email?.Trim().ToLower() ?? "";
+            if (string.IsNullOrWhiteSpace(emailNormalized) || !emailNormalized.EndsWith("@gmail.com", StringComparison.OrdinalIgnoreCase))
+            {
+                ModelState.AddModelError(nameof(model.Email), "Hệ thống chỉ chấp nhận địa chỉ email @gmail.com (ví dụ: example@gmail.com).");
+            }
+
             if (!ModelState.IsValid) return View(model);
 
-            var daTonTai = await _db.NguoiDungs.AnyAsync(n => n.Email == model.Email);
+            var daTonTai = await _db.NguoiDungs.AnyAsync(n => n.Email == emailNormalized);
             if (daTonTai)
             {
                 ModelState.AddModelError(nameof(model.Email), "Email này đã được đăng ký. Vui lòng dùng email khác hoặc đăng nhập.");
@@ -60,7 +66,7 @@ namespace AMPFashionStore.Controllers
             var pending = new PendingRegistration
             {
                 HoTen = model.HoTen.Trim(),
-                Email = model.Email.Trim().ToLower(),
+                Email = emailNormalized,
                 SoDienThoai = model.SoDienThoai.Trim(),
                 MatKhauHash = _hasher.HashPassword(null!, model.MatKhau)
             };

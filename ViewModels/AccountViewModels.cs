@@ -12,7 +12,7 @@ namespace AMPFashionStore.ViewModels
 
         [Required(ErrorMessage = "Vui lòng nhập email")]
         [EmailAddress(ErrorMessage = "Email không đúng định dạng")]
-        [RegularExpression(@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", ErrorMessage = "Email không đúng định dạng (ví dụ: example@gmail.com)")]
+        [RegularExpression(@"^[a-zA-Z0-9._%+-]+@[gG][mM][aA][iI][lL]\.[cC][oO][mM]$", ErrorMessage = "Hệ thống chỉ chấp nhận địa chỉ email @gmail.com (ví dụ: example@gmail.com)")]
         [Display(Name = "Email")]
         public string Email { get; set; } = string.Empty;
 
