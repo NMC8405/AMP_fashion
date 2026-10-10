@@ -1,4 +1,5 @@
 @using AMPFashionStore.Data
+@using Microsoft.EntityFrameworkCore
 @inject ApplicationDbContext Db
 @{
     var uid = User.GetUserId();
@@ -23,6 +24,16 @@
         </a>
         <a asp-controller="DonHang" asp-action="DanhSach" class="@(current == "orders" ? "active" : "")">
             <span><i class="bi bi-bag-check me-2"></i>Đơn hàng của tôi</span>
+        </a>
+        @{
+            var soChuaDocSidebar = await Db.ThongBaos.CountAsync(t => t.NguoiDungId == uid && !t.DaDoc);
+        }
+        <a asp-controller="TaiKhoan" asp-action="ThongBao" class="@(current == "notifications" ? "active" : "")">
+            <span><i class="bi bi-bell me-2"></i>Thông báo</span>
+            @if (soChuaDocSidebar > 0)
+            {
+                <span class="badge bg-danger rounded-pill" style="font-size:11px">@soChuaDocSidebar</span>
+            }
         </a>
         <a asp-controller="YeuThich" asp-action="Index" class="@(current == "wishlist" ? "active" : "")">
             <span><i class="bi bi-heart me-2"></i>Yêu thích</span>

@@ -23,6 +23,7 @@ namespace AMPFashionStore.Data
         public DbSet<DanhGia> DanhGias => Set<DanhGia>();
         public DbSet<YeuThich> YeuThichs => Set<YeuThich>();
         public DbSet<LienHe> LienHes => Set<LienHe>();
+        public DbSet<ThongBao> ThongBaos => Set<ThongBao>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

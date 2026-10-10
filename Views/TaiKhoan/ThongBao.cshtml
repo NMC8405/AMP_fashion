@@ -1,0 +1,94 @@
+@model List<AMPFashionStore.Models.ThongBao>
+@{
+    ViewData["Title"] = "Thông báo của tôi";
+    ViewBag.SidebarActive = "notifications";
+    string tab = ViewBag.TabLoai ?? "TatCa";
+    int soChuaDoc = ViewBag.SoChuaDoc ?? 0;
+}
+
+<div class="amp-container" style="padding:40px 24px 90px">
+    <div class="amp-page-title">
+        <a asp-controller="Home" asp-action="Index" class="back"><i class="bi bi-arrow-left"></i></a>
+        <div>Thông báo của tôi</div>
+    </div>
+
+    <div class="amp-account-wrap">
+        <partial name="_TaiKhoanSidebar" />
+
+        <div>
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                <div class="amp-tabs mb-0">
+                    <a asp-action="ThongBao" asp-route-loai="" class="@(tab == "TatCa" ? "active" : "")">Tất cả</a>
+                    <a asp-action="ThongBao" asp-route-loai="ChuaDoc" class="@(tab == "ChuaDoc" ? "active" : "")">
+                        Chưa đọc @if (soChuaDoc > 0) { <span class="badge-count">@soChuaDoc</span> }
+                    </a>
+                    <a asp-action="ThongBao" asp-route-loai="DonHang" class="@(tab == "DonHang" ? "active" : "")">Đơn hàng</a>
+                    <a asp-action="ThongBao" asp-route-loai="DanhGia" class="@(tab == "DanhGia" ? "active" : "")">Phản hồi shop</a>
+                </div>
+
+                @if (Model.Any(t => !t.DaDoc))
+                {
+                    <form asp-action="DocTatCa" method="post" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="amp-btn amp-btn-outline amp-btn-sm" style="font-size:12.5px">
+                            <i class="bi bi-check2-all me-1"></i>Đánh dấu tất cả đã đọc
+                        </button>
+                    </form>
+                }
+            </div>
+
+            @if (Model.Count == 0)
+            {
+                <div class="amp-card text-center py-5">
+                    <i class="bi bi-bell-slash fs-1 text-muted d-block mb-3"></i>
+                    <h5 class="fw-bold mb-1">Không có thông báo nào</h5>
+                    <p class="text-muted" style="font-size:13.5px">Mọi thông báo cập nhật về đơn hàng và phản hồi của người bán sẽ hiển thị tại đây.</p>
+                </div>
+            }
+            else
+            {
+                <div class="d-flex flex-column gap-2">
+                    @foreach (var tb in Model)
+                    {
+                        var iconClass = tb.LoaiThongBao switch
+                        {
+                            LoaiThongBao.DonHang => "bi-bag-check-fill text-primary",
+                            LoaiThongBao.DanhGia => "bi-chat-heart-fill text-success",
+                            _ => "bi-bell-fill text-warning"
+                        };
+
+                        var bgClass = tb.DaDoc ? "background:#fff" : "background:#f8fafc;border-left:4px solid var(--amp-ink)";
+
+                        <div class="amp-card p-3" style="@bgClass;transition:all .2s ease">
+                            <div class="d-flex align-items-start gap-3">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center p-2" style="background:#f1f5f9;font-size:20px;flex-shrink:0">
+                                    <i class="bi @iconClass"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="d-flex justify-content-between align-items-start gap-2 mb-1">
+                                        <div class="fw-bold text-dark" style="font-size:14.5px">
+                                            @tb.TieuDe
+                                            @if (!tb.DaDoc)
+                                            {
+                                                <span class="badge bg-danger ms-1" style="font-size:10px;vertical-align:middle">Mới</span>
+                                            }
+                                        </div>
+                                        <span class="text-muted" style="font-size:11.5px;white-space:nowrap">@tb.NgayTao.ToString("dd/MM/yyyy HH:mm")</span>
+                                    </div>
+                                    <p class="mb-2 text-secondary" style="font-size:13.5px;line-height:1.45">@tb.NoiDung</p>
+
+                                    @if (!string.IsNullOrEmpty(tb.DuongDan))
+                                    {
+                                        <a asp-action="XemThongBao" asp-route-id="@tb.Id" class="amp-btn amp-btn-outline amp-btn-sm" style="font-size:12px;padding:3px 12px">
+                                            Xem chi tiết →
+                                        </a>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</div>

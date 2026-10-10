@@ -40,7 +40,8 @@
                     <div class="col-md-6">
                         <div class="amp-field">
                             <label asp-for="NgaySinh" class="amp-label"><span class="opt">(tùy chọn)</span></label>
-                            <input asp-for="NgaySinh" class="form-control" type="date" />
+                            <input asp-for="NgaySinh" class="form-control" type="date" id="inputNgaySinh" max="@DateTime.Today.ToString("yyyy-MM-dd")" min="1900-01-01" />
+                            <span asp-validation-for="NgaySinh" class="text-danger" id="ngaySinhError"></span>
                         </div>
                     </div>
                     <div class="col-md-6">
@@ -67,4 +68,30 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var form = document.querySelector('form[action*="ThongTinCaNhan"]') || document.querySelector('form');
+            var inputNgaySinh = document.getElementById('inputNgaySinh');
+            var errSpan = document.getElementById('ngaySinhError');
+
+            if (form && inputNgaySinh) {
+                form.addEventListener('submit', function(e) {
+                    if (inputNgaySinh.validity && inputNgaySinh.validity.badInput) {
+                        e.preventDefault();
+                        if (errSpan) {
+                            errSpan.textContent = 'Ngày sinh không tồn tại hoặc không hợp lệ (ví dụ: ngày 31/02). Vui lòng kiểm tra lại.';
+                        }
+                        inputNgaySinh.focus();
+                        return false;
+                    }
+                });
+
+                inputNgaySinh.addEventListener('input', function() {
+                    if (errSpan && (!inputNgaySinh.validity || !inputNgaySinh.validity.badInput)) {
+                        errSpan.textContent = '';
+                    }
+                });
+            }
+        });
+    </script>
 }

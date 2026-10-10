@@ -3,6 +3,7 @@
     ViewData["Title"] = "Chi tiết đơn hàng";
     ViewBag.SidebarActive = "orders";
     var daDanhGia = ViewBag.SanPhamDaDanhGia as List<int> ?? new();
+    var danhGiaCuaDon = ViewBag.DanhGiaCuaDonHang as List<DanhGia> ?? new();
 
     (string label, string css)[] Buoc()
     {
@@ -128,7 +129,9 @@
                         {
                             if (daDanhGia.Contains(ct.SanPhamId.Value))
                             {
-                                <span class="amp-btn amp-btn-outline amp-btn-sm" style="pointer-events:none;opacity:.5">Đã đánh giá</span>
+                                <button type="button" class="amp-btn amp-btn-outline amp-btn-sm" data-bs-toggle="modal" data-bs-target="#modalXemDanhGia@(ct.SanPhamId)">
+                                    <i class="bi bi-chat-left-dots me-1"></i>Xem đánh giá & phản hồi
+                                </button>
                             }
                             else
                             {
@@ -211,5 +214,64 @@
                 </div>
             </div>
         </div>
+    }
+
+    @foreach (var ct in Model.ChiTietDonHangs.Where(c => c.SanPhamId.HasValue && daDanhGia.Contains(c.SanPhamId!.Value)))
+    {
+        var dg = danhGiaCuaDon.FirstOrDefault(d => d.SanPhamId == ct.SanPhamId!.Value);
+        if (dg != null)
+        {
+            <div class="modal fade" id="modalXemDanhGia@(ct.SanPhamId)" tabindex="-1">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Đánh giá: @ct.TenSanPham</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="amp-label mb-1">Đánh giá của bạn:</label>
+                                <div class="amp-rating mb-2">
+                                    @for (var i = 1; i <= 5; i++)
+                                    {
+                                        <i class="bi @(i <= dg.SoSao ? "bi-star-fill text-warning" : "bi-star text-muted")"></i>
+                                    }
+                                    <span class="ms-2" style="font-size:12px;color:var(--amp-muted)">(@dg.NgayDanhGia.ToString("dd/MM/yyyy HH:mm"))</span>
+                                </div>
+                                <div class="p-3 rounded bg-light border" style="font-size:13.5px;color:#1f2937">
+                                    @dg.NoiDung
+                                </div>
+                            </div>
+
+                            <label class="amp-label mb-1">Phản hồi từ shop:</label>
+                            @if (!string.IsNullOrEmpty(dg.PhanHoi))
+                            {
+                                <div class="p-3 rounded border" style="background:#f0fdf4;border-color:#bbf7d0!important">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <strong style="font-size:13px;color:#15803d"><i class="bi bi-shop me-1"></i>Thương hiệu AMP</strong>
+                                        @if (dg.NgayPhanHoi.HasValue)
+                                        {
+                                            <span style="font-size:11.5px;color:#16a34a">@dg.NgayPhanHoi.Value.ToString("dd/MM/yyyy HH:mm")</span>
+                                        }
+                                    </div>
+                                    <div style="font-size:13px;color:#166534;line-height:1.4">
+                                        @dg.PhanHoi
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="p-3 rounded bg-light border text-muted" style="font-size:13px">
+                                    <i class="bi bi-clock me-1"></i>Cửa hàng đang tiếp nhận và sẽ sớm phản hồi đánh giá của bạn. Cảm ơn bạn!
+                                </div>
+                            }
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="amp-btn amp-btn-outline" data-bs-dismiss="modal">Đóng</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
     }
 }

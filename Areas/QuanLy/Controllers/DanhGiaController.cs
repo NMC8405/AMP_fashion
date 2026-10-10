@@ -1,5 +1,6 @@
 using AMPFashionStore.Data;
 using AMPFashionStore.Models;
+using AMPFashionStore.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -11,10 +12,12 @@ namespace AMPFashionStore.Areas.QuanLy.Controllers
     public class DanhGiaController : Controller
     {
         private readonly ApplicationDbContext _db;
+        private readonly IThongBaoService _thongBaoService;
 
-        public DanhGiaController(ApplicationDbContext db)
+        public DanhGiaController(ApplicationDbContext db, IThongBaoService thongBaoService)
         {
             _db = db;
+            _thongBaoService = thongBaoService;
         }
 
         [HttpGet]
@@ -69,7 +72,9 @@ namespace AMPFashionStore.Areas.QuanLy.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> PhanHoi(int id, string noiDungPhanHoi)
         {
-            var danhGia = await _db.DanhGias.FindAsync(id);
+            var danhGia = await _db.DanhGias
+                .Include(d => d.SanPham)
+                .FirstOrDefaultAsync(d => d.Id == id);
             if (danhGia == null)
             {
                 return Json(new { success = false, message = "Không tìm thấy đánh giá." });
@@ -83,6 +88,13 @@ namespace AMPFashionStore.Areas.QuanLy.Controllers
             danhGia.PhanHoi = noiDungPhanHoi.Trim();
             danhGia.NgayPhanHoi = DateTime.Now;
             await _db.SaveChangesAsync();
+
+            await _thongBaoService.GuiThongBaoAsync(
+                danhGia.NguoiDungId,
+                "Cửa hàng đã phản hồi đánh giá của bạn",
+                $"AMP Fashion Store đã phản hồi đánh giá của bạn về sản phẩm \"{danhGia.SanPham?.TenSanPham}\": \"{danhGia.PhanHoi}\"",
+                LoaiThongBao.DanhGia,
+                $"/SanPham/ChiTiet/{danhGia.SanPhamId}");
 
             TempData["ThongBao"] = "Đã gửi phản hồi đánh giá thành công.";
             return RedirectToAction(nameof(DanhSach));

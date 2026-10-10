@@ -66,8 +66,8 @@
                     @foreach (var ct in don.ChiTietDonHangs.Take(2))
                     {
                         <div class="d-flex gap-3 align-items-center mb-2">
-                            <img src="@ct.HinhAnh" class="amp-thumb-sm" />
-                            <div class="flex-grow-1" style="font-size:13px">@ct.TenSanPham <span style="color:var(--amp-muted)">x@ct.SoLuong</span></div>
+                            <img src="@ct.HinhAnh" class="amp-thumb-sm" style="width:56px;height:68px;object-fit:cover;border-radius:6px;flex-shrink:0" alt="@ct.TenSanPham" />
+                            <div class="flex-grow-1" style="font-size:13px;word-break:break-word">@ct.TenSanPham <span style="color:var(--amp-muted)">x@ct.SoLuong</span></div>
                         </div>
                     }
                     @if (don.ChiTietDonHangs.Count > 2)

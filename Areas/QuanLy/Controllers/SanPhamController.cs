@@ -74,6 +74,11 @@ namespace AMPFashionStore.Areas.QuanLy.Controllers
             ModelState.Remove(nameof(SanPhamFormViewModel.TatCaKichThuoc));
             ModelState.Remove(nameof(SanPhamFormViewModel.BienThes));
 
+            if (!string.IsNullOrWhiteSpace(model.SanPham.TenSanPham) && model.SanPham.TenSanPham.Trim().Length > 100)
+            {
+                ModelState.AddModelError("SanPham.TenSanPham", "Tên sản phẩm không được vượt quá 100 ký tự.");
+            }
+
             if (!ModelState.IsValid)
                 return View(await XayDungFormAsync(model.SanPham, new List<BienTheSanPham>(), model.DuongDanAnhPhu));
 
@@ -113,6 +118,11 @@ namespace AMPFashionStore.Areas.QuanLy.Controllers
 
             var sanPham = await _db.SanPhams.Include(s => s.HinhAnhs).FirstOrDefaultAsync(s => s.Id == id);
             if (sanPham == null) return NotFound();
+
+            if (!string.IsNullOrWhiteSpace(model.SanPham.TenSanPham) && model.SanPham.TenSanPham.Trim().Length > 100)
+            {
+                ModelState.AddModelError("SanPham.TenSanPham", "Tên sản phẩm không được vượt quá 100 ký tự.");
+            }
 
             if (!ModelState.IsValid)
             {

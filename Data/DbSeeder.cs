@@ -58,8 +58,7 @@ namespace AMPFashionStore.Data
 
             if (await db.DanhMucs.AnyAsync())
             {
-                await CapNhatAnhThoiTrangThatAsync(db);
-                await SeedThemDuLieuFigmaAsync(db, hasher);
+                // Dữ liệu đã được khởi tạo trước đó. Không tự ý ghi đè hay gán ảnh cho các sản phẩm trong hệ thống.
                 return;
             }
 

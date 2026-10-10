@@ -14,12 +14,13 @@
     bool isSanPham = string.Equals(currentController, "SanPham", StringComparison.OrdinalIgnoreCase) && !isBoSuuTap;
     bool isLienHe = string.Equals(currentController, "LienHe", StringComparison.OrdinalIgnoreCase);
 
-    int soLuongGio = 0, soLuongYeuThich = 0;
+    int soLuongGio = 0, soLuongYeuThich = 0, soLuongThongBao = 0;
     if (User.Identity?.IsAuthenticated == true)
     {
         var uid = User.GetUserId();
         soLuongGio = await Db.GioHangItems.Where(g => g.NguoiDungId == uid).CountAsync();
         soLuongYeuThich = await Db.YeuThichs.CountAsync(y => y.NguoiDungId == uid);
+        soLuongThongBao = await Db.ThongBaos.CountAsync(t => t.NguoiDungId == uid && !t.DaDoc);
     }
 }
 <!DOCTYPE html>
@@ -56,6 +57,13 @@
                     <i class="bi bi-heart"></i>
                     @if (soLuongYeuThich > 0) { <span class="amp-icon-badge">@soLuongYeuThich</span> }
                 </a>
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <a class="amp-icon-btn position-relative" asp-controller="TaiKhoan" asp-action="ThongBao" title="Thông báo của tôi">
+                        <i class="bi bi-bell"></i>
+                        @if (soLuongThongBao > 0) { <span class="amp-icon-badge" style="background:#dc2626">@soLuongThongBao</span> }
+                    </a>
+                }
                 <a class="amp-icon-btn" asp-controller="DonHang" asp-action="DanhSach" title="Đơn hàng của tôi"><i class="bi bi-bag-check"></i></a>
                 <a class="amp-icon-btn" asp-controller="GioHang" asp-action="Index" title="Giỏ hàng">
                     <i class="bi bi-bag"></i>
@@ -74,6 +82,7 @@
                                 <li><hr class="dropdown-divider"></li>
                             }
                             <li><a class="dropdown-item" asp-controller="TaiKhoan" asp-action="ThongTinCaNhan"><i class="bi bi-person-circle me-2"></i>Thông tin cá nhân</a></li>
+                            <li><a class="dropdown-item d-flex justify-content-between align-items-center" asp-controller="TaiKhoan" asp-action="ThongBao"><span><i class="bi bi-bell me-2"></i>Thông báo</span>@if (soLuongThongBao > 0) { <span class="badge bg-danger rounded-pill" style="font-size:10px">@soLuongThongBao</span> }</a></li>
                             <li><a class="dropdown-item" asp-controller="DonHang" asp-action="DanhSach"><i class="bi bi-bag-check me-2"></i>Đơn hàng của tôi</a></li>
                             <li><a class="dropdown-item" asp-controller="YeuThich" asp-action="Index"><i class="bi bi-heart me-2"></i>Yêu thích</a></li>
                             <li><a class="dropdown-item" asp-controller="TaiKhoan" asp-action="DoiMatKhau"><i class="bi bi-key me-2"></i>Đổi mật khẩu</a></li>

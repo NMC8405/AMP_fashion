@@ -1,5 +1,6 @@
 using AMPFashionStore.Data;
 using AMPFashionStore.Models;
+using AMPFashionStore.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -12,10 +13,12 @@ namespace AMPFashionStore.Areas.QuanLy.Controllers
     {
         private const int SoDongMoiTrang = 15;
         private readonly ApplicationDbContext _db;
+        private readonly IThongBaoService _thongBaoService;
 
-        public DonHangController(ApplicationDbContext db)
+        public DonHangController(ApplicationDbContext db, IThongBaoService thongBaoService)
         {
             _db = db;
+            _thongBaoService = thongBaoService;
         }
 
         [HttpGet]
@@ -115,6 +118,14 @@ namespace AMPFashionStore.Areas.QuanLy.Controllers
                 don.TrangThaiThanhToan = TrangThaiThanhToan.DaThanhToan;
                 don.TrangThaiDonHang = TrangThaiDonHang.ChoXacNhan;
                 await _db.SaveChangesAsync();
+
+                await _thongBaoService.GuiThongBaoAsync(
+                    don.NguoiDungId,
+                    "Xác nhận thanh toán thành công",
+                    $"Đơn hàng #{don.MaDonHang} của bạn đã được xác nhận thanh toán thành công.",
+                    LoaiThongBao.DonHang,
+                    $"/DonHang/ChiTiet/{don.Id}");
+
                 TempData["ThongBao"] = "Đã xác nhận thanh toán cho đơn hàng.";
             }
             return RedirectToAction(nameof(ChiTiet), new { id });
@@ -132,6 +143,14 @@ namespace AMPFashionStore.Areas.QuanLy.Controllers
                 don.TrangThaiDonHang = TrangThaiDonHang.DaXacNhan;
                 don.NgayXacNhan = DateTime.Now;
                 await _db.SaveChangesAsync();
+
+                await _thongBaoService.GuiThongBaoAsync(
+                    don.NguoiDungId,
+                    "Đơn hàng đã được xác nhận",
+                    $"Đơn hàng #{don.MaDonHang} đã được nhân viên xác nhận và đang đóng gói chuẩn bị giao hàng.",
+                    LoaiThongBao.DonHang,
+                    $"/DonHang/ChiTiet/{don.Id}");
+
                 TempData["ThongBao"] = "Đã xác nhận đơn hàng, chuẩn bị giao cho đơn vị vận chuyển.";
             }
             return RedirectToAction(nameof(ChiTiet), new { id });
@@ -148,6 +167,14 @@ namespace AMPFashionStore.Areas.QuanLy.Controllers
             {
                 don.TrangThaiDonHang = TrangThaiDonHang.DangGiao;
                 await _db.SaveChangesAsync();
+
+                await _thongBaoService.GuiThongBaoAsync(
+                    don.NguoiDungId,
+                    "Đơn hàng đang được giao",
+                    $"Đơn hàng #{don.MaDonHang} đã được bàn giao cho đơn vị vận chuyển và đang trên đường giao đến bạn.",
+                    LoaiThongBao.DonHang,
+                    $"/DonHang/ChiTiet/{don.Id}");
+
                 TempData["ThongBao"] = "Đã bàn giao đơn hàng cho đơn vị vận chuyển.";
             }
             return RedirectToAction(nameof(ChiTiet), new { id });
@@ -183,6 +210,14 @@ namespace AMPFashionStore.Areas.QuanLy.Controllers
                 don.TrangThaiThanhToan = TrangThaiThanhToan.DaHoanTien;
 
             await _db.SaveChangesAsync();
+
+            await _thongBaoService.GuiThongBaoAsync(
+                don.NguoiDungId,
+                "Đơn hàng đã bị hủy",
+                $"Đơn hàng #{don.MaDonHang} đã bị hủy bởi cửa hàng. Lý do: {don.LyDoHuy}",
+                LoaiThongBao.DonHang,
+                $"/DonHang/ChiTiet/{don.Id}");
+
             TempData["ThongBao"] = "Đã hủy đơn hàng và hoàn trả tồn kho.";
             return RedirectToAction(nameof(ChiTiet), new { id });
         }

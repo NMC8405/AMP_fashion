@@ -17,7 +17,7 @@ namespace AMPFashionStore.ViewModels
         public string Email { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Vui lòng nhập số điện thoại")]
-        [Phone(ErrorMessage = "Số điện thoại không hợp lệ")]
+        [RegularExpression(@"^0\d{9}$", ErrorMessage = "Số điện thoại không hợp lệ. Vui lòng nhập đúng 10 chữ số bắt đầu bằng số 0 (ví dụ: 0912345678).")]
         [Display(Name = "Số điện thoại")]
         public string SoDienThoai { get; set; } = string.Empty;
 
@@ -140,7 +140,7 @@ namespace AMPFashionStore.ViewModels
         public string Email { get; set; } = string.Empty; // chỉ hiển thị, không cho sửa
 
         [Required(ErrorMessage = "Vui lòng nhập số điện thoại")]
-        [Phone(ErrorMessage = "Số điện thoại không hợp lệ")]
+        [RegularExpression(@"^0\d{9}$", ErrorMessage = "Số điện thoại không hợp lệ. Vui lòng nhập đúng 10 chữ số bắt đầu bằng số 0 (ví dụ: 0912345678).")]
         [Display(Name = "Số điện thoại")]
         public string SoDienThoai { get; set; } = string.Empty;
 

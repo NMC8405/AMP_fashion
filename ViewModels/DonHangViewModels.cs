@@ -18,8 +18,8 @@ namespace AMPFashionStore.ViewModels
         [Display(Name = "Tên người nhận")]
         public string TenNguoiNhan { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Vui lòng nhập số điện thoại")]
-        [Phone(ErrorMessage = "Số điện thoại không hợp lệ")]
+        [Required(ErrorMessage = "Vui lòng nhập số điện thoại nhận hàng")]
+        [RegularExpression(@"^0\d{9}$", ErrorMessage = "Số điện thoại không hợp lệ. Vui lòng nhập đúng 10 chữ số bắt đầu bằng số 0 (ví dụ: 0912345678).")]
         [Display(Name = "Số điện thoại")]
         public string SoDienThoaiNhan { get; set; } = string.Empty;
 
@@ -58,8 +58,8 @@ namespace AMPFashionStore.ViewModels
         [Display(Name = "Tên người nhận")]
         public string TenNguoiNhan { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Vui lòng nhập số điện thoại")]
-        [Phone(ErrorMessage = "Số điện thoại không hợp lệ")]
+        [Required(ErrorMessage = "Vui lòng nhập số điện thoại nhận hàng")]
+        [RegularExpression(@"^0\d{9}$", ErrorMessage = "Số điện thoại không hợp lệ. Vui lòng nhập đúng 10 chữ số bắt đầu bằng số 0 (ví dụ: 0912345678).")]
         [Display(Name = "Số điện thoại")]
         public string SoDienThoaiNhan { get; set; } = string.Empty;
 

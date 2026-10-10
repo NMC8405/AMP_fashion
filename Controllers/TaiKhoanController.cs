@@ -22,13 +22,15 @@ namespace AMPFashionStore.Controllers
         private readonly ApplicationDbContext _db;
         private readonly IEmailService _emailService;
         private readonly IWebHostEnvironment _env;
+        private readonly IThongBaoService _thongBaoService;
         private readonly PasswordHasher<NguoiDung> _hasher = new();
 
-        public TaiKhoanController(ApplicationDbContext db, IEmailService emailService, IWebHostEnvironment env)
+        public TaiKhoanController(ApplicationDbContext db, IEmailService emailService, IWebHostEnvironment env, IThongBaoService thongBaoService)
         {
             _db = db;
             _emailService = emailService;
             _env = env;
+            _thongBaoService = thongBaoService;
         }
 
         // ================= UC01: ĐĂNG KÝ TÀI KHOẢN =================
@@ -366,6 +368,30 @@ namespace AMPFashionStore.Controllers
             if (user == null) return NotFound();
 
             model.Email = user.Email;
+
+            // Kiểm tra giá trị nhập ngày sinh
+            var rawNgaySinh = Request.Form["NgaySinh"].ToString();
+            if (!string.IsNullOrWhiteSpace(rawNgaySinh))
+            {
+                if (!DateTime.TryParse(rawNgaySinh, out var parsedDate))
+                {
+                    ModelState.AddModelError(nameof(model.NgaySinh), "Ngày sinh không tồn tại hoặc định dạng không hợp lệ (ví dụ: 31/02).");
+                }
+                else if (parsedDate > DateTime.Today)
+                {
+                    ModelState.AddModelError(nameof(model.NgaySinh), "Ngày sinh không thể lớn hơn ngày hiện tại.");
+                }
+                else if (parsedDate < new DateTime(1900, 1, 1))
+                {
+                    ModelState.AddModelError(nameof(model.NgaySinh), "Ngày sinh không hợp lệ.");
+                }
+            }
+            else if (ModelState.TryGetValue(nameof(model.NgaySinh), out var ngaySinhState) && ngaySinhState.Errors.Count > 0)
+            {
+                ngaySinhState.Errors.Clear();
+                ngaySinhState.Errors.Add("Ngày sinh không tồn tại hoặc định dạng không hợp lệ (ví dụ: 31/02).");
+            }
+
             if (!ModelState.IsValid) return View(model);
 
             user.HoTen = model.HoTen.Trim();
@@ -411,6 +437,62 @@ namespace AMPFashionStore.Controllers
 
             TempData["ThongBao"] = "Đổi mật khẩu thành công.";
             return RedirectToAction(nameof(ThongTinCaNhan));
+        }
+
+        // ================= MỤC THÔNG BÁO (UC BỔ SUNG THEO YÊU CẦU 05) =================
+        [Authorize]
+        [HttpGet]
+        public async Task<IActionResult> ThongBao(string? loai)
+        {
+            var userId = User.GetUserId();
+            var danhSach = await _thongBaoService.LayThongBaoCuaToiAsync(userId, 100);
+
+            if (!string.IsNullOrEmpty(loai))
+            {
+                if (loai == "DonHang")
+                    danhSach = danhSach.Where(t => t.LoaiThongBao == LoaiThongBao.DonHang).ToList();
+                else if (loai == "DanhGia")
+                    danhSach = danhSach.Where(t => t.LoaiThongBao == LoaiThongBao.DanhGia).ToList();
+                else if (loai == "ChuaDoc")
+                    danhSach = danhSach.Where(t => !t.DaDoc).ToList();
+            }
+
+            ViewBag.TabLoai = loai ?? "TatCa";
+            ViewBag.SoChuaDoc = await _thongBaoService.DemThongBaoChuaDocAsync(userId);
+            return View(danhSach);
+        }
+
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DocTatCa()
+        {
+            var userId = User.GetUserId();
+            await _thongBaoService.DanhDauTatCaDaDocAsync(userId);
+            TempData["ThongBao"] = "Đã đánh dấu tất cả thông báo là đã đọc.";
+            return RedirectToAction(nameof(ThongBao));
+        }
+
+        [Authorize]
+        [HttpGet]
+        public async Task<IActionResult> XemThongBao(int id)
+        {
+            var userId = User.GetUserId();
+            var tb = await _db.ThongBaos.FirstOrDefaultAsync(t => t.Id == id && t.NguoiDungId == userId);
+            if (tb == null) return RedirectToAction(nameof(ThongBao));
+
+            if (!tb.DaDoc)
+            {
+                tb.DaDoc = true;
+                await _db.SaveChangesAsync();
+            }
+
+            if (!string.IsNullOrEmpty(tb.DuongDan))
+            {
+                return Redirect(tb.DuongDan);
+            }
+
+            return RedirectToAction(nameof(ThongBao));
         }
 
         // ================= Hàm hỗ trợ dùng nội bộ =================

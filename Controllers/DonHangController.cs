@@ -17,11 +17,13 @@ namespace AMPFashionStore.Controllers
 
         private readonly ApplicationDbContext _db;
         private readonly BankSettings _bankSettings;
+        private readonly IThongBaoService _thongBaoService;
 
-        public DonHangController(ApplicationDbContext db, IOptions<BankSettings> bankSettings)
+        public DonHangController(ApplicationDbContext db, IOptions<BankSettings> bankSettings, IThongBaoService thongBaoService)
         {
             _db = db;
             _bankSettings = bankSettings.Value;
+            _thongBaoService = thongBaoService;
         }
 
         // ================= Bắt đầu thanh toán từ giỏ hàng =================
@@ -158,6 +160,13 @@ namespace AMPFashionStore.Controllers
             _db.DonHangs.Add(donHangMoi);
             await _db.SaveChangesAsync();
 
+            await _thongBaoService.GuiThongBaoAsync(
+                userId,
+                "Đặt hàng thành công",
+                $"Đơn hàng #{donHangMoi.MaDonHang} của bạn đã được tiếp nhận với tổng tiền {donHangMoi.TongTien:N0}₫. Cảm ơn bạn đã mua hàng!",
+                LoaiThongBao.DonHang,
+                $"/DonHang/ChiTiet/{donHangMoi.Id}");
+
             HttpContext.Session.Remove("CheckoutItems");
 
             return RedirectToAction(nameof(DatHangThanhCong), new { id = donHangMoi.Id });
@@ -274,10 +283,11 @@ namespace AMPFashionStore.Controllers
             if (don == null) return NotFound();
 
             var userId = User.GetUserId();
-            ViewBag.SanPhamDaDanhGia = await _db.DanhGias
+            var danhGias = await _db.DanhGias
                 .Where(dg => dg.DonHangId == id)
-                .Select(dg => dg.SanPhamId)
                 .ToListAsync();
+            ViewBag.SanPhamDaDanhGia = danhGias.Select(dg => dg.SanPhamId).ToList();
+            ViewBag.DanhGiaCuaDonHang = danhGias;
 
             if (don.PhuongThucThanhToan == PhuongThucThanhToan.ChuyenKhoanNganHang
                 && don.TrangThaiThanhToan == TrangThaiThanhToan.ChuaThanhToan
@@ -387,6 +397,14 @@ namespace AMPFashionStore.Controllers
             }
 
             await _db.SaveChangesAsync();
+
+            await _thongBaoService.GuiThongBaoAsync(
+                don.NguoiDungId,
+                "Đơn hàng đã được hủy",
+                $"Đơn hàng #{don.MaDonHang} đã được hủy theo yêu cầu của bạn. Lý do: {don.LyDoHuy}.{thongBaoHoanTien}",
+                LoaiThongBao.DonHang,
+                $"/DonHang/ChiTiet/{don.Id}");
+
             TempData["ThongBao"] = "Đơn hàng đã được hủy thành công." + thongBaoHoanTien;
             return RedirectToAction(nameof(ChiTiet), new { id = request.DonHangId });
         }
@@ -411,6 +429,14 @@ namespace AMPFashionStore.Controllers
                 don.TrangThaiThanhToan = TrangThaiThanhToan.DaThanhToan;
 
             await _db.SaveChangesAsync();
+
+            await _thongBaoService.GuiThongBaoAsync(
+                don.NguoiDungId,
+                "Giao hàng thành công",
+                $"Đơn hàng #{don.MaDonHang} đã được giao thành công! Cảm ơn bạn đã mua hàng, hãy để lại đánh giá cho sản phẩm nhé.",
+                LoaiThongBao.DonHang,
+                $"/DonHang/ChiTiet/{don.Id}");
+
             TempData["ThongBao"] = "Cảm ơn bạn đã xác nhận nhận hàng! Đừng quên để lại đánh giá cho sản phẩm nhé.";
             return RedirectToAction(nameof(ChiTiet), new { id });
         }

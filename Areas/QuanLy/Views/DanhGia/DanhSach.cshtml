@@ -112,7 +112,14 @@
                         <td>
                             @if (!string.IsNullOrEmpty(dg.PhanHoi))
                             {
-                                <span class="amp-pill amp-pill-green">Đã phản hồi</span>
+                                <div class="mb-1"><span class="amp-pill amp-pill-green">Đã phản hồi</span></div>
+                                <div style="font-size:12px;color:#374151;max-width:220px;white-space:normal;line-height:1.35">
+                                    <strong>Shop:</strong> @dg.PhanHoi
+                                </div>
+                                @if (dg.NgayPhanHoi.HasValue)
+                                {
+                                    <div class="text-muted" style="font-size:11px;margin-top:2px">@dg.NgayPhanHoi.Value.ToString("dd/MM/yyyy HH:mm")</div>
+                                }
                             }
                             else
                             {
@@ -124,9 +131,9 @@
                         </td>
                         <td>
                             <div class="d-flex align-items-center gap-2">
-                                <button type="button" class="btn btn-sm btn-dark rounded-pill px-3 py-1 text-white fw-semibold" 
+                                <button type="button" class="btn btn-sm @(!string.IsNullOrEmpty(dg.PhanHoi) ? "btn-outline-dark" : "btn-dark") rounded-pill px-3 py-1 fw-semibold" 
                                         style="font-size:12px" data-bs-toggle="modal" data-bs-target="#modalPhanHoi_@dg.Id">
-                                    <i class="bi bi-reply-fill"></i> Trả lời
+                                    <i class="bi @(!string.IsNullOrEmpty(dg.PhanHoi) ? "bi-pencil-square" : "bi-reply-fill")"></i> @(!string.IsNullOrEmpty(dg.PhanHoi) ? "Sửa phản hồi" : "Trả lời")
                                 </button>
                                 
                                 <form asp-action="Xoa" method="post" onsubmit="return confirm('Bạn có chắc muốn xóa đánh giá này?');" class="d-inline">

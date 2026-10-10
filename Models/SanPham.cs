@@ -26,7 +26,7 @@ namespace AMPFashionStore.Models
         public int Id { get; set; }
 
         [Required(ErrorMessage = "Vui lòng nhập tên sản phẩm")]
-        [StringLength(200)]
+        [StringLength(100, ErrorMessage = "Tên sản phẩm không được vượt quá 100 ký tự")]
         [Display(Name = "Tên sản phẩm")]
         public string TenSanPham { get; set; } = string.Empty;
 
