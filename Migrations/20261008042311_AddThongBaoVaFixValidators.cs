@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -11,6 +11,8 @@ namespace AMPFashionStore.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.Sql("UPDATE SanPhams SET TenSanPham = LEFT(TenSanPham, 100) WHERE LEN(TenSanPham) > 100;");
+
             migrationBuilder.AlterColumn<string>(
                 name: "TenSanPham",
                 table: "SanPhams",
