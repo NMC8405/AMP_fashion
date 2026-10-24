@@ -1,11 +1,27 @@
 @model BaoCaoViewModel
 @{
     ViewData["Title"] = "Báo cáo thống kê";
-    var nhanNgay = Model.DoanhThuTheoNgay.Select(d => d.Ngay.ToString("dd/MM")).ToList();
+    var nhanNgay = Model.DoanhThuTheoNgay.Select(d => (Model.KyBaoCao == "homnay" ? d.Ngay.ToString("HH:mm") : d.Ngay.ToString("dd/MM"))).ToList();
     var giaTriDoanhThu = Model.DoanhThuTheoNgay.Select(d => d.DoanhThu).ToList();
 
     var dmLabels = Model.DoanhThuTheoDanhMuc.Keys.ToList();
     var dmValues = Model.DoanhThuTheoDanhMuc.Values.ToList();
+
+    var tongDonDonut = Model.DonHangTheoTrangThai.Values.Sum();
+    var statusLabels = Model.DonHangTheoTrangThai.Keys.ToList();
+    var statusValues = Model.DonHangTheoTrangThai.Values.ToList();
+
+    var mauTrangThai = new Dictionary<string, string>
+    {
+        { "Đã giao hàng", "#10B981" },
+        { "Đã xác nhận", "#3B82F6" },
+        { "Đang giao hàng", "#06B6D4" },
+        { "Chờ xác nhận", "#F59E0B" },
+        { "Chờ thanh toán", "#8B5CF6" },
+        { "Đã hủy", "#EF4444" }
+    };
+
+    var statusColorsList = statusLabels.Select(l => mauTrangThai.ContainsKey(l) ? mauTrangThai[l] : "#6B7280").ToList();
 }
 
 <!-- ACTION & PERIOD FILTER BAR -->
@@ -19,30 +35,34 @@
     </div>
 
     <div class="d-flex align-items-center gap-2">
-        <select class="amp-select-filter shadow-sm">
-            <option>Danh mục: Tất cả</option>
-            <option>Áo Nam</option>
-            <option>Áo Nữ</option>
-            <option>Quần</option>
-            <option>Váy - Đầm</option>
-            <option>Phụ kiện</option>
-        </select>
         <a href="/QuanLy/Dashboard/XuatFile" class="amp-btn-dark-pill shadow-sm">
             <i class="bi bi-file-earmark-arrow-down"></i> Xuất báo cáo
         </a>
     </div>
 </div>
 
-<!-- 4 TOP KPI CARDS (FIGMA: TỔNG DOANH THU, TỔNG ĐƠN HÀNG, AOV, LỢI NHUẬN) -->
+<!-- 4 TOP KPI CARDS (DỮ LIỆU THỰC TẾ & SO SÁNH CHUẨN XÁC THEO TỪNG KỲ) -->
 <div class="amp-kpi-4grid">
     <div class="amp-kpi-card-modern">
         <div class="lbl">
             <span>TỔNG DOANH THU</span>
             <i class="bi bi-graph-up text-secondary"></i>
         </div>
-        <div class="val">@(Model.TongDoanhThu > 0 ? Model.TongDoanhThu.ToString("N0") : "1.250.000.000") ₫</div>
-        <div class="sub">
-            <i class="bi bi-arrow-up-short fs-5"></i> +12.4% so với tháng trước
+        <div class="val">@Model.TongDoanhThu.ToString("N0") ₫</div>
+        <div class="sub @(Model.DoanhThuTangTruong < 0 ? "down" : (Model.DoanhThuTangTruong == 0 ? "text-secondary" : ""))">
+            @if (Model.DoanhThuTangTruong > 0)
+            {
+                <i class="bi bi-arrow-up-short fs-5 text-success"></i><span class="text-success fw-semibold">+@Model.DoanhThuTangTruong.ToString("0.0")%</span>
+            }
+            else if (Model.DoanhThuTangTruong < 0)
+            {
+                <i class="bi bi-arrow-down-short fs-5 text-danger"></i><span class="text-danger fw-semibold">@Model.DoanhThuTangTruong.ToString("0.0")%</span>
+            }
+            else
+            {
+                <i class="bi bi-dash fs-5"></i><span>0.0%</span>
+            }
+            <span class="ms-1">@Model.NhanSoSanh</span>
         </div>
     </div>
 
@@ -51,9 +71,21 @@
             <span>TỔNG ĐƠN HÀNG</span>
             <i class="bi bi-bag-check text-secondary"></i>
         </div>
-        <div class="val">@(Model.TongDonHang > 0 ? Model.TongDonHang.ToString("N0") : "3.420") đơn</div>
-        <div class="sub">
-            <i class="bi bi-arrow-up-short fs-5"></i> +8.2% so với tháng trước
+        <div class="val">@Model.TongDonHang.ToString("N0") đơn</div>
+        <div class="sub @(Model.DonHangTangTruong < 0 ? "down" : (Model.DonHangTangTruong == 0 ? "text-secondary" : ""))">
+            @if (Model.DonHangTangTruong > 0)
+            {
+                <i class="bi bi-arrow-up-short fs-5 text-success"></i><span class="text-success fw-semibold">+@Model.DonHangTangTruong.ToString("0.0")%</span>
+            }
+            else if (Model.DonHangTangTruong < 0)
+            {
+                <i class="bi bi-arrow-down-short fs-5 text-danger"></i><span class="text-danger fw-semibold">@Model.DonHangTangTruong.ToString("0.0")%</span>
+            }
+            else
+            {
+                <i class="bi bi-dash fs-5"></i><span>0.0%</span>
+            }
+            <span class="ms-1">@Model.NhanSoSanh</span>
         </div>
     </div>
 
@@ -62,9 +94,21 @@
             <span>GIÁ TRỊ ĐƠN TRUNG BÌNH (AOV)</span>
             <i class="bi bi-calculator text-secondary"></i>
         </div>
-        <div class="val">@(Model.GiaTriDonHangTrungBinh > 0 ? Model.GiaTriDonHangTrungBinh.ToString("N0") : "365.000") ₫</div>
-        <div class="sub down">
-            <i class="bi bi-arrow-down-short fs-5"></i> -1.5% so với tháng trước
+        <div class="val">@Model.GiaTriDonHangTrungBinh.ToString("N0") ₫</div>
+        <div class="sub @(Model.GiaTriDonHangTangTruong < 0 ? "down" : (Model.GiaTriDonHangTangTruong == 0 ? "text-secondary" : ""))">
+            @if (Model.GiaTriDonHangTangTruong > 0)
+            {
+                <i class="bi bi-arrow-up-short fs-5 text-success"></i><span class="text-success fw-semibold">+@Model.GiaTriDonHangTangTruong.ToString("0.0")%</span>
+            }
+            else if (Model.GiaTriDonHangTangTruong < 0)
+            {
+                <i class="bi bi-arrow-down-short fs-5 text-danger"></i><span class="text-danger fw-semibold">@Model.GiaTriDonHangTangTruong.ToString("0.0")%</span>
+            }
+            else
+            {
+                <i class="bi bi-dash fs-5"></i><span>0.0%</span>
+            }
+            <span class="ms-1">@Model.NhanSoSanh</span>
         </div>
     </div>
 
@@ -73,9 +117,21 @@
             <span>LỢI NHUẬN ƯỚC TÍNH</span>
             <i class="bi bi-cash-stack text-secondary"></i>
         </div>
-        <div class="val">@(Model.LoiNhuan > 0 ? Model.LoiNhuan.ToString("N0") : "480.000.000") ₫</div>
-        <div class="sub">
-            <i class="bi bi-arrow-up-short fs-5"></i> +15.6% so với tháng trước
+        <div class="val">@Model.LoiNhuan.ToString("N0") ₫</div>
+        <div class="sub @(Model.LoiNhuanTangTruong < 0 ? "down" : (Model.LoiNhuanTangTruong == 0 ? "text-secondary" : ""))">
+            @if (Model.LoiNhuanTangTruong > 0)
+            {
+                <i class="bi bi-arrow-up-short fs-5 text-success"></i><span class="text-success fw-semibold">+@Model.LoiNhuanTangTruong.ToString("0.0")%</span>
+            }
+            else if (Model.LoiNhuanTangTruong < 0)
+            {
+                <i class="bi bi-arrow-down-short fs-5 text-danger"></i><span class="text-danger fw-semibold">@Model.LoiNhuanTangTruong.ToString("0.0")%</span>
+            }
+            else
+            {
+                <i class="bi bi-dash fs-5"></i><span>0.0%</span>
+            }
+            <span class="ms-1">@Model.NhanSoSanh</span>
         </div>
     </div>
 </div>
@@ -85,7 +141,7 @@
     <div class="col-lg-8">
         <div class="amp-box-card h-100 mb-0">
             <h5 class="fw-bold mb-1" style="font-size:16px;">Biểu đồ Doanh thu</h5>
-            <div class="text-muted mb-3" style="font-size:12.5px;">Theo dõi xu hướng dòng tiền và phát triển</div>
+            <div class="text-muted mb-3" style="font-size:12.5px;">Theo dõi xu hướng dòng tiền theo kỳ báo cáo (@Model.KyBaoCao)</div>
             <div style="height: 280px; position: relative;">
                 <canvas id="chartBaoCaoLine"></canvas>
             </div>
@@ -93,25 +149,41 @@
     </div>
 
     <div class="col-lg-4">
-        <div class="amp-box-card h-100 mb-0">
-            <h5 class="fw-bold mb-1" style="font-size:16px;">Trạng thái đơn hàng</h5>
-            <div class="text-muted mb-3" style="font-size:12.5px;">Tỷ trọng đơn hàng trong kỳ báo cáo</div>
-            <div style="height: 200px; position: relative;" class="my-2">
-                <canvas id="chartBaoCaoDonut"></canvas>
-            </div>
-            <div class="mt-3 pt-3 border-top">
-                <div class="d-flex justify-content-between align-items-center mb-2" style="font-size:12.5px">
-                    <span class="d-flex align-items-center gap-2"><span style="width:10px;height:10px;border-radius:50%;background:#10B981"></span> Đã giao (58%)</span>
-                    <span class="fw-bold">1.984 đơn</span>
-                </div>
-                <div class="d-flex justify-content-between align-items-center mb-2" style="font-size:12.5px">
-                    <span class="d-flex align-items-center gap-2"><span style="width:10px;height:10px;border-radius:50%;background:#3B82F6"></span> Đang vận chuyển (33%)</span>
-                    <span class="fw-bold">1.128 đơn</span>
-                </div>
-                <div class="d-flex justify-content-between align-items-center" style="font-size:12.5px">
-                    <span class="d-flex align-items-center gap-2"><span style="width:10px;height:10px;border-radius:50%;background:#F59E0B"></span> Chờ xác nhận (9%)</span>
-                    <span class="fw-bold">308 đơn</span>
-                </div>
+        <div class="amp-box-card h-100 mb-0 d-flex flex-column justify-content-between">
+            <div>
+                <h5 class="fw-bold mb-1" style="font-size:16px;">Trạng thái đơn hàng</h5>
+                <div class="text-muted mb-3" style="font-size:12.5px;">Tỷ trọng đơn hàng trong kỳ báo cáo</div>
+                
+                @if (tongDonDonut > 0)
+                {
+                    <div style="height: 200px; position: relative;" class="my-2">
+                        <canvas id="chartBaoCaoDonut"></canvas>
+                    </div>
+                    <div class="mt-3 pt-3 border-top">
+                        @foreach (var kvp in Model.DonHangTheoTrangThai)
+                        {
+                            var pct = tongDonDonut > 0 ? Math.Round((double)kvp.Value / tongDonDonut * 100, 1) : 0;
+                            var color = mauTrangThai.ContainsKey(kvp.Key) ? mauTrangThai[kvp.Key] : "#6B7280";
+                            <div class="d-flex justify-content-between align-items-center mb-2" style="font-size:12.5px">
+                                <span class="d-flex align-items-center gap-2">
+                                    <span style="width:10px;height:10px;border-radius:50%;background:@color"></span>
+                                    @kvp.Key (@pct%)
+                                </span>
+                                <span class="fw-bold">@kvp.Value đơn</span>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="d-flex flex-column align-items-center justify-content-center py-5 text-center text-muted">
+                        <div class="rounded-circle bg-light d-flex align-items-center justify-content-center mb-3" style="width:60px;height:60px">
+                            <i class="bi bi-inbox fs-3 text-secondary"></i>
+                        </div>
+                        <h6 class="fw-semibold text-dark mb-1">Chưa có đơn hàng</h6>
+                        <p class="small text-muted mb-0">Không có đơn hàng nào phát sinh trong kỳ này.</p>
+                    </div>
+                }
             </div>
         </div>
     </div>
@@ -126,7 +198,7 @@
     </div>
 </div>
 
-<!-- PRODUCT EFFICIENCY TABLE (FIGMA: CHI TIẾT HIỆU QUẢ SẢN PHẨM) -->
+<!-- PRODUCT EFFICIENCY TABLE (CHI TIẾT HIỆU QUẢ SẢN PHẨM THỰC TẾ) -->
 <div class="amp-box-card">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h5 class="fw-bold mb-0" style="font-size:16px;">Chi tiết hiệu quả sản phẩm</h5>
@@ -152,8 +224,8 @@
                         <tr>
                             <td>
                                 <div class="d-flex align-items-center gap-3">
-                                    <img src="@(string.IsNullOrEmpty(sp.HinhAnh) ? "https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?q=80&w=200&auto=format&fit=crop" : sp.HinhAnh)" 
-                                         class="amp-prod-thumb" alt="@sp.TenSanPham" />
+                                    <img src="@(string.IsNullOrEmpty(sp.HinhAnh) ? "/images/placeholder.png" : sp.HinhAnh)" 
+                                         class="amp-prod-thumb" alt="@sp.TenSanPham" onerror="this.src='/images/placeholder.png'" />
                                     <div>
                                         <div class="fw-bold text-dark">@sp.TenSanPham</div>
                                         <div class="text-muted" style="font-size:11.5px">@sp.MaSanPham</div>
@@ -173,66 +245,11 @@
                 }
                 else
                 {
-                    <!-- Mock data matching Figma design -->
                     <tr>
-                        <td>
-                            <div class="d-flex align-items-center gap-3">
-                                <img src="https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?q=80&w=200&auto=format&fit=crop" class="amp-prod-thumb" alt="Áo Sơ Mi Lụa Premium" />
-                                <div>
-                                    <div class="fw-bold text-dark">Áo Sơ Mi Lụa Premium (Vàng Cát)</div>
-                                    <div class="text-muted" style="font-size:11.5px">AMP-SM-01</div>
-                                </div>
-                            </div>
+                        <td colspan="5" class="text-center py-4 text-muted">
+                            <i class="bi bi-inbox fs-3 d-block mb-2 text-secondary opacity-50"></i>
+                            Không có sản phẩm nào phát sinh doanh thu trong kỳ này.
                         </td>
-                        <td class="fw-semibold">520</td>
-                        <td class="fw-bold">234.000.000 ₫</td>
-                        <td class="text-success fw-semibold">110.000.000 ₫</td>
-                        <td><span class="amp-pill amp-pill-green">+18.5%</span></td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <div class="d-flex align-items-center gap-3">
-                                <img src="https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?q=80&w=200&auto=format&fit=crop" class="amp-prod-thumb" alt="Quần Tây Tây Âu Classic" />
-                                <div>
-                                    <div class="fw-bold text-dark">Quần Tây Tây Âu Classic</div>
-                                    <div class="text-muted" style="font-size:11.5px">AMP-TR-04</div>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="fw-semibold">410</td>
-                        <td class="fw-bold">184.500.000 ₫</td>
-                        <td class="text-success fw-semibold">82.000.000 ₫</td>
-                        <td><span class="amp-pill amp-pill-green">+12.3%</span></td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <div class="d-flex align-items-center gap-3">
-                                <img src="https://images.unsplash.com/photo-1496747611176-843222e1e57c?q=80&w=200&auto=format&fit=crop" class="amp-prod-thumb" alt="Đầm Linen Dáng Suông" />
-                                <div>
-                                    <div class="fw-bold text-dark">Đầm Linen Dáng Suông</div>
-                                    <div class="text-muted" style="font-size:11.5px">AMP-DR-12</div>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="fw-semibold">380</td>
-                        <td class="fw-bold">209.000.000 ₫</td>
-                        <td class="text-success fw-semibold">95.000.000 ₫</td>
-                        <td><span class="amp-pill amp-pill-green">+8.1%</span></td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <div class="d-flex align-items-center gap-3">
-                                <img src="https://images.unsplash.com/photo-1576995853123-5a10305d93c0?q=80&w=200&auto=format&fit=crop" class="amp-prod-thumb" alt="Blazer Dạ Tweed Cổ Điển" />
-                                <div>
-                                    <div class="fw-bold text-dark">Blazer Dạ Tweed Cổ Điển</div>
-                                    <div class="text-muted" style="font-size:11.5px">AMP-BZ-08</div>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="fw-semibold">290</td>
-                        <td class="fw-bold">348.000.000 ₫</td>
-                        <td class="text-success fw-semibold">150.000.000 ₫</td>
-                        <td><span class="amp-pill amp-pill-green">+22.4%</span></td>
                     </tr>
                 }
             </tbody>
@@ -245,17 +262,20 @@
     // 1. Line Chart Doanh Thu
     const ctxLine = document.getElementById('chartBaoCaoLine');
     if (ctxLine) {
+        const lineLabels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(nhanNgay));
+        const lineData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(giaTriDoanhThu));
+
         new Chart(ctxLine, {
             type: 'line',
             data: {
-                labels: ['05/09', '06/09', '07/09', '08/09', '09/09', '10/09', '11/09'],
+                labels: lineLabels,
                 datasets: [{
                     label: 'Doanh thu',
-                    data: [35000000, 48000000, 39000000, 65000000, 52000000, 71000000, 68000000],
-                    borderColor: '#C5A880',
-                    backgroundColor: 'rgba(197, 168, 128, 0.15)',
+                    data: lineData,
+                    borderColor: '#111827',
+                    backgroundColor: 'rgba(17, 24, 39, 0.06)',
                     borderWidth: 2.5,
-                    pointBackgroundColor: '#C5A880',
+                    pointBackgroundColor: '#111827',
                     pointBorderColor: '#FFFFFF',
                     pointBorderWidth: 2,
                     pointRadius: 4,
@@ -266,15 +286,29 @@
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return 'Doanh thu: ' + Number(context.raw).toLocaleString('vi-VN') + ' ₫';
+                            }
+                        }
+                    }
+                },
                 scales: {
                     x: { grid: { display: false }, ticks: { color: '#9CA3AF' } },
                     y: {
+                        beginAtZero: true,
                         border: { dash: [4, 4] },
                         grid: { color: '#F3F4F6' },
                         ticks: {
                             color: '#9CA3AF',
-                            callback: v => (v / 1000000) + 'M'
+                            callback: function(v) {
+                                if (v >= 1000000) return (v / 1000000).toLocaleString('vi-VN') + 'M';
+                                if (v >= 1000) return (v / 1000).toLocaleString('vi-VN') + 'k';
+                                return v;
+                            }
                         }
                     }
                 }
@@ -282,16 +316,20 @@
         });
     }
 
-    // 2. Donut Chart Trạng Thái
+    // 2. Donut Chart Trạng Thái (Chỉ render khi có dữ liệu)
     const ctxDonut = document.getElementById('chartBaoCaoDonut');
     if (ctxDonut) {
+        const statusLabels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(statusLabels));
+        const statusData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(statusValues));
+        const statusColors = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(statusColorsList));
+
         new Chart(ctxDonut, {
             type: 'doughnut',
             data: {
-                labels: ['Đã giao', 'Đang vận chuyển', 'Chờ xác nhận'],
+                labels: statusLabels,
                 datasets: [{
-                    data: [1984, 1128, 308],
-                    backgroundColor: ['#10B981', '#3B82F6', '#F59E0B'],
+                    data: statusData,
+                    backgroundColor: statusColors,
                     borderWidth: 3,
                     borderColor: '#FFFFFF'
                 }]
@@ -308,25 +346,38 @@
     // 3. Bar Chart Category Revenue
     const ctxCategory = document.getElementById('chartBaoCaoCategory');
     if (ctxCategory) {
+        const catLabels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(dmLabels));
+        const catData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(dmValues.Select(v => Math.Round(v / 1000000m, 2))));
+
         new Chart(ctxCategory, {
             type: 'bar',
             data: {
-                labels: ['Đầm/Váy', 'Sơ mi/Áo', 'Quần Jean', 'Blazer/Dạ', 'Phụ kiện'],
+                labels: catLabels,
                 datasets: [{
                     label: 'Doanh thu (Triệu VNĐ)',
-                    data: [420, 350, 280, 190, 85],
+                    data: catData,
                     backgroundColor: '#111827',
                     borderRadius: 6,
-                    barThickness: 40
+                    barThickness: 36
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return 'Doanh thu: ' + Number(context.raw).toLocaleString('vi-VN') + ' Triệu VNĐ';
+                            }
+                        }
+                    }
+                },
                 scales: {
                     x: { grid: { display: false }, ticks: { color: '#4B5563', font: { weight: 'bold' } } },
                     y: {
+                        beginAtZero: true,
                         border: { dash: [4, 4] },
                         grid: { color: '#F3F4F6' },
                         ticks: { color: '#9CA3AF', callback: v => v + 'M' }

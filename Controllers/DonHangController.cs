@@ -18,12 +18,14 @@ namespace AMPFashionStore.Controllers
         private readonly ApplicationDbContext _db;
         private readonly BankSettings _bankSettings;
         private readonly IThongBaoService _thongBaoService;
+        private readonly IAiSentimentService _aiService;
 
-        public DonHangController(ApplicationDbContext db, IOptions<BankSettings> bankSettings, IThongBaoService thongBaoService)
+        public DonHangController(ApplicationDbContext db, IOptions<BankSettings> bankSettings, IThongBaoService thongBaoService, IAiSentimentService aiService)
         {
             _db = db;
             _bankSettings = bankSettings.Value;
             _thongBaoService = thongBaoService;
+            _aiService = aiService;
         }
 
         // ================= Bắt đầu thanh toán từ giỏ hàng =================
@@ -441,6 +443,28 @@ namespace AMPFashionStore.Controllers
             return RedirectToAction(nameof(ChiTiet), new { id });
         }
 
+        // ================= AJAX: Kiểm tra cảm xúc trước khi submit =================
+        [HttpPost]
+        [AllowAnonymous]
+        public async Task<IActionResult> KiemTraDanhGia([FromBody] KiemTraDanhGiaRequest request)
+        {
+            if (request == null || string.IsNullOrWhiteSpace(request.NoiDung))
+            {
+                return Json(new { success = true, isNegative = false, label = "normal", confidence = 0.0 });
+            }
+
+            var aiResult = await _aiService.AnalyzeSentimentAsync(request.NoiDung, request.SoSao);
+            return Json(new
+            {
+                success = aiResult.Success,
+                isNegative = aiResult.IsNegative,
+                label = aiResult.Label,
+                labelDisplayName = aiResult.LabelDisplayName,
+                confidence = Math.Round(aiResult.Confidence * 100, 1),
+                probabilities = aiResult.Probabilities
+            });
+        }
+
         // ================= UC28: Đánh giá sản phẩm =================
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -462,18 +486,64 @@ namespace AMPFashionStore.Controllers
                 return RedirectToAction(nameof(ChiTiet), new { id = request.DonHangId });
             }
 
-            _db.DanhGias.Add(new DanhGia
+            // Gọi AI phân tích cảm xúc
+            var aiResult = await _aiService.AnalyzeSentimentAsync(request.NoiDung, request.SoSao);
+            var isNegative = aiResult.IsNegative;
+
+            var danhGia = new DanhGia
             {
                 SanPhamId = request.SanPhamId,
                 NguoiDungId = User.GetUserId(),
                 DonHangId = request.DonHangId,
                 SoSao = request.SoSao,
                 NoiDung = request.NoiDung.Trim(),
-                NgayDanhGia = DateTime.Now
-            });
-            await _db.SaveChangesAsync();
+                NgayDanhGia = DateTime.Now,
+                NhanCamXuc = aiResult.Label,
+                DoTinCay = aiResult.Confidence,
+                BiCanhBaoTieuCuc = isNegative
+            };
 
-            TempData["ThongBao"] = "Cảm ơn bạn đã đánh giá sản phẩm!";
+            if (isNegative)
+            {
+                // Thay vì chặn người dùng, cho phép gửi nhưng chuyển sang chờ Admin duyệt
+                danhGia.TrangThai = TrangThaiDanhGia.ChoDuyet;
+                _db.DanhGias.Add(danhGia);
+                await _db.SaveChangesAsync();
+
+                // Gửi thông báo đến Quản trị viên để xét duyệt
+                var quanTriIds = await _db.NguoiDungs
+                    .Where(u => u.VaiTro == VaiTro.QuanTriVien || u.VaiTro == VaiTro.NhanVien)
+                    .Select(u => u.Id)
+                    .ToListAsync();
+
+                var tenSanPham = await _db.SanPhams
+                    .Where(s => s.Id == request.SanPhamId)
+                    .Select(s => s.TenSanPham)
+                    .FirstOrDefaultAsync() ?? "sản phẩm";
+
+                foreach (var adminId in quanTriIds)
+                {
+                    await _thongBaoService.GuiThongBaoAsync(
+                        adminId,
+                        "Cảnh báo đánh giá tiêu cực cần duyệt",
+                        $"Khách hàng vừa gửi đánh giá có dấu hiệu tiêu cực ({Math.Round(aiResult.Confidence * 100, 1)}%) về sản phẩm \"{tenSanPham}\". Vui lòng kiểm duyệt.",
+                        LoaiThongBao.DanhGia,
+                        "/QuanLy/DanhGia/DanhSach?trangThai=cho_duyet");
+                }
+
+                TempData["ThongBao"] = "Đánh giá của bạn đã được gửi. Do phát hiện có yếu tố tiêu cực, đánh giá sẽ được Quản trị viên xem xét duyệt trước khi hiển thị công khai.";
+            }
+            else
+            {
+                // Nội dung bình thường / tích cực -> hiển thị ngay
+                danhGia.TrangThai = TrangThaiDanhGia.DaDuyet;
+                danhGia.NgayDuyet = DateTime.Now;
+                _db.DanhGias.Add(danhGia);
+                await _db.SaveChangesAsync();
+
+                TempData["ThongBao"] = "Cảm ơn bạn đã đánh giá sản phẩm!";
+            }
+
             return RedirectToAction(nameof(ChiTiet), new { id = request.DonHangId });
         }
 

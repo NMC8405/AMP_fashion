@@ -120,10 +120,23 @@ namespace AMPFashionStore.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<bool>("BiCanhBaoTieuCuc")
+                        .HasColumnType("bit");
+
+                    b.Property<double?>("DoTinCay")
+                        .HasColumnType("float");
+
                     b.Property<int>("DonHangId")
                         .HasColumnType("int");
 
+                    b.Property<string>("LyDoTuChoi")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
                     b.Property<DateTime>("NgayDanhGia")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("NgayDuyet")
                         .HasColumnType("datetime2");
 
                     b.Property<DateTime?>("NgayPhanHoi")
@@ -131,6 +144,10 @@ namespace AMPFashionStore.Migrations
 
                     b.Property<int>("NguoiDungId")
                         .HasColumnType("int");
+
+                    b.Property<string>("NhanCamXuc")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<string>("NoiDung")
                         .IsRequired()
@@ -145,6 +162,9 @@ namespace AMPFashionStore.Migrations
                         .HasColumnType("int");
 
                     b.Property<int>("SoSao")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TrangThai")
                         .HasColumnType("int");
 
                     b.HasKey("Id");

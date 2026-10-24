@@ -19,6 +19,7 @@ namespace AMPFashionStore.Controllers
             var sanPhamCoTheHienThi = _db.SanPhams
                 .Include(s => s.DanhMuc)
                 .Include(s => s.BienThes)
+                .Include(s => s.DanhGias)
                 .Where(s => s.TrangThaiHienThi);
 
             ViewBag.DanhMucNoiBat = await _db.DanhMucs.Take(3).ToListAsync();
@@ -52,6 +53,7 @@ namespace AMPFashionStore.Controllers
             var sanPhamGiamGia = await _db.SanPhams
                 .Include(s => s.DanhMuc)
                 .Include(s => s.BienThes)
+                .Include(s => s.DanhGias)
                 .Where(s => s.TrangThaiHienThi && s.GiaKhuyenMai != null && s.GiaKhuyenMai < s.GiaGoc)
                 .OrderByDescending(s => s.NgayTao)
                 .ToListAsync();

@@ -39,20 +39,20 @@
                     </div>
                     <div class="col-md-6">
                         <div class="amp-field">
-                            <label asp-for="NgaySinh" class="amp-label"><span class="opt">(tùy chọn)</span></label>
+                            <label asp-for="NgaySinh" class="amp-label">Ngày sinh <span class="opt">(tùy chọn)</span></label>
                             <input asp-for="NgaySinh" class="form-control" type="date" id="inputNgaySinh" max="@DateTime.Today.ToString("yyyy-MM-dd")" min="1900-01-01" />
                             <span asp-validation-for="NgaySinh" class="text-danger" id="ngaySinhError"></span>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="amp-field">
-                            <label asp-for="GioiTinh" class="amp-label"></label>
+                            <label asp-for="GioiTinh" class="amp-label">Giới tính</label>
                             <select asp-for="GioiTinh" class="form-select" asp-items="Html.GetEnumSelectList<GioiTinh>()"></select>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="amp-field">
-                            <label asp-for="DiaChi" class="amp-label"><span class="opt">(tùy chọn)</span></label>
+                            <label asp-for="DiaChi" class="amp-label">Địa chỉ <span class="opt">(tùy chọn)</span></label>
                             <input asp-for="DiaChi" class="form-control" placeholder="Địa chỉ mặc định khi đặt hàng" />
                         </div>
                     </div>

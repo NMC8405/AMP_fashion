@@ -16,8 +16,8 @@
 }
 <div class="amp-product-card">
     <div class="amp-product-thumb">
-        <a asp-controller="SanPham" asp-action="ChiTiet" asp-route-id="@Model.Id">
-            <img src="@Model.HinhAnhChinh" alt="@Model.TenSanPham" loading="lazy" />
+        <a asp-controller="SanPham" asp-action="ChiTiet" asp-route-id="@Model.Id" class="amp-thumb-link">
+            <img src="@(string.IsNullOrEmpty(Model.HinhAnhChinh) ? "/images/placeholder.svg" : Model.HinhAnhChinh)" alt="@Model.TenSanPham" loading="lazy" onerror="this.onerror=null;this.src='/images/placeholder.svg';" />
         </a>
         @if (Model.DangGiamGia)
         {
@@ -36,7 +36,7 @@
         }
         else
         {
-            <a class="amp-wish-btn" asp-controller="TaiKhoan" asp-action="DangNhap" title="Đăng nhập để lưu"><i class="bi bi-heart"></i></a>
+            <a class="amp-wish-btn" asp-controller="TaiKhoan" asp-action="DangNhap" title="Đăng nhập để lưu" style="position:absolute!important;top:10px!important;right:10px!important;width:34px!important;height:34px!important;max-width:34px!important;max-height:34px!important;border-radius:50%!important;z-index:3!important;display:inline-flex!important;align-items:center;justify-content:center;"><i class="bi bi-heart"></i></a>
         }
         @if (!conHang)
         {
@@ -56,11 +56,21 @@
         }
     </div>
     <div class="amp-rating">
-        @{ var diem = Model.DiemDanhGiaTrungBinh; }
+        @{ 
+            var diem = Model.DiemDanhGiaTrungBinh;
+            var soLuong = Model.SoLuongDanhGia;
+        }
         @for (var i = 1; i <= 5; i++)
         {
             <i class="bi @(i <= Math.Round(diem) ? "bi-star-fill" : "bi-star")"></i>
         }
-        <span class="cnt">(@(Model.DanhGias?.Count ?? 0))</span>
+        @if (soLuong > 0)
+        {
+            <span class="cnt fw-medium ms-1" style="color:var(--amp-ink-soft)">@diem.ToString("0.0") (@soLuong)</span>
+        }
+        else
+        {
+            <span class="cnt">(0)</span>
+        }
     </div>
 </div>

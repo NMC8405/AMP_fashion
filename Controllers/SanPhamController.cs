@@ -143,10 +143,15 @@ namespace AMPFashionStore.Controllers
                 TonKhoTheoBienThe = tonKho,
                 AnhTheoMauSac = anhTheoMau,
                 SanPhamLienQuan = await _db.SanPhams
+                    .Include(s => s.DanhGias)
+                    .Include(s => s.BienThes)
                     .Where(s => s.DanhMucId == sanPham.DanhMucId && s.Id != sanPham.Id && s.TrangThaiHienThi)
                     .Take(4)
                     .ToListAsync(),
-                DanhGias = sanPham.DanhGias.OrderByDescending(d => d.NgayDanhGia).ToList()
+                DanhGias = sanPham.DanhGias
+                    .Where(d => d.TrangThai == TrangThaiDanhGia.DaDuyet || (User.Identity?.IsAuthenticated == true && d.NguoiDungId == User.GetUserId()))
+                    .OrderByDescending(d => d.NgayDanhGia)
+                    .ToList()
             };
 
             if (User.Identity?.IsAuthenticated == true)
@@ -171,7 +176,10 @@ namespace AMPFashionStore.Controllers
         public async Task<IActionResult> BoSuuTap()
         {
             var danhMucs = await _db.DanhMucs
-                .Include(d => d.SanPhams)
+                .Include(d => d.SanPhams.Where(s => s.TrangThaiHienThi))
+                    .ThenInclude(s => s.DanhGias)
+                .Include(d => d.SanPhams.Where(s => s.TrangThaiHienThi))
+                    .ThenInclude(s => s.BienThes)
                 .ToListAsync();
             return View(danhMucs);
         }

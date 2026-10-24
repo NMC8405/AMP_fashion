@@ -31,6 +31,8 @@ namespace AMPFashionStore.Controllers
 
             var idsYeuThich = sanPhamYeuThich.Select(s => s.Id).ToList();
             ViewBag.GoiY = await _db.SanPhams
+                .Include(s => s.DanhGias)
+                .Include(s => s.BienThes)
                 .Where(s => s.TrangThaiHienThi && !idsYeuThich.Contains(s.Id))
                 .OrderByDescending(s => s.NgayTao)
                 .Take(4)

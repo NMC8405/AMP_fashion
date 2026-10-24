@@ -68,8 +68,9 @@
                     var tonKho = sp.TongSoLuongTon;
                     <tr>
                         <td>
-                            <img src="@(string.IsNullOrEmpty(sp.HinhAnhChinh) ? "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=200&auto=format&fit=crop" : sp.HinhAnhChinh)" 
-                                 class="amp-prod-thumb" alt="@sp.TenSanPham" />
+                            <img src="@(string.IsNullOrEmpty(sp.HinhAnhChinh) ? "/images/placeholder.svg" : sp.HinhAnhChinh)" 
+                                 class="amp-prod-thumb" alt="@sp.TenSanPham" 
+                                 onerror="this.onerror=null;this.src='/images/placeholder.svg';" />
                         </td>
                         <td>
                             <div class="fw-bold text-dark">@sp.TenSanPham</div>

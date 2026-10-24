@@ -74,8 +74,13 @@ namespace AMPFashionStore.Models
         public int TongSoLuongTon => BienThes?.Sum(b => b.SoLuongTon) ?? 0;
 
         [NotMapped]
-        public double DiemDanhGiaTrungBinh => DanhGias != null && DanhGias.Count > 0
-            ? Math.Round(DanhGias.Average(d => d.SoSao), 1)
+        public double DiemDanhGiaTrungBinh => DanhGias != null && DanhGias.Any(d => d.TrangThai == TrangThaiDanhGia.DaDuyet)
+            ? Math.Round(DanhGias.Where(d => d.TrangThai == TrangThaiDanhGia.DaDuyet).Average(d => d.SoSao), 1)
+            : 0;
+
+        [NotMapped]
+        public int SoLuongDanhGia => DanhGias != null
+            ? DanhGias.Count(d => d.TrangThai == TrangThaiDanhGia.DaDuyet)
             : 0;
 
         public ICollection<HinhAnhSanPham> HinhAnhs { get; set; } = new List<HinhAnhSanPham>();

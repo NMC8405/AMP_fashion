@@ -2,6 +2,18 @@ using System.ComponentModel.DataAnnotations;
 
 namespace AMPFashionStore.Models
 {
+    public enum TrangThaiDanhGia
+    {
+        [Display(Name = "Đã duyệt")]
+        DaDuyet = 0,
+
+        [Display(Name = "Chờ duyệt")]
+        ChoDuyet = 1,
+
+        [Display(Name = "Từ chối")]
+        TuChoi = 2
+    }
+
     /// <summary>Đánh giá sản phẩm (UC28) - chỉ tạo được sau khi đơn hàng ở trạng thái Đã giao.</summary>
     public class DanhGia
     {
@@ -32,6 +44,26 @@ namespace AMPFashionStore.Models
         public string? PhanHoi { get; set; }
 
         public DateTime? NgayPhanHoi { get; set; }
+
+        // ===== Tích hợp AI PhoBERT phân tích cảm xúc & Kiểm duyệt =====
+        [Display(Name = "Trạng thái kiểm duyệt")]
+        public TrangThaiDanhGia TrangThai { get; set; } = TrangThaiDanhGia.DaDuyet;
+
+        [StringLength(20)]
+        [Display(Name = "Cảm xúc AI")]
+        public string? NhanCamXuc { get; set; } // negative, normal, positive
+
+        [Display(Name = "Độ tin cậy AI")]
+        public double? DoTinCay { get; set; }
+
+        [Display(Name = "Cảnh báo tiêu cực")]
+        public bool BiCanhBaoTieuCuc { get; set; } = false;
+
+        [StringLength(500)]
+        [Display(Name = "Lý do từ chối")]
+        public string? LyDoTuChoi { get; set; }
+
+        public DateTime? NgayDuyet { get; set; }
     }
 
     /// <summary>Sản phẩm yêu thích của người dùng (UC32/UC33).</summary>

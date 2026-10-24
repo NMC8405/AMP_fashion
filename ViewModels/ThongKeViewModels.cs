@@ -14,10 +14,11 @@ namespace AMPFashionStore.ViewModels
         [Display(Name = "Đến ngày")]
         public DateTime DenNgay { get; set; } = DateTime.Today;
 
+        public string NhanSoSanh { get; set; } = "so với kỳ trước";
         public int TongDonHangMoi { get; set; }
-        public double DonHangTangTruong { get; set; } = 8.1;
+        public double DonHangTangTruong { get; set; }
         public decimal TongDoanhThu { get; set; }
-        public double DoanhThuTangTruong { get; set; } = 12.4;
+        public double DoanhThuTangTruong { get; set; }
         public int TongKhachHang { get; set; }
         public int TongKhachHangMoi { get; set; }
         public int TongSanPham { get; set; }
@@ -62,14 +63,15 @@ namespace AMPFashionStore.ViewModels
     public class BaoCaoViewModel
     {
         public string KyBaoCao { get; set; } = "30ngay";
+        public string NhanSoSanh { get; set; } = "so với tháng trước";
         public decimal TongDoanhThu { get; set; }
-        public double DoanhThuTangTruong { get; set; } = 12.4;
+        public double DoanhThuTangTruong { get; set; }
         public int TongDonHang { get; set; }
-        public double DonHangTangTruong { get; set; } = 8.2;
+        public double DonHangTangTruong { get; set; }
         public decimal GiaTriDonHangTrungBinh { get; set; }
-        public double GiaTriDonHangTangTruong { get; set; } = -1.5;
+        public double GiaTriDonHangTangTruong { get; set; }
         public decimal LoiNhuan { get; set; }
-        public double LoiNhuanTangTruong { get; set; } = 15.6;
+        public double LoiNhuanTangTruong { get; set; }
 
         public List<DiemDoanhThuTheoNgay> DoanhThuTheoNgay { get; set; } = new();
         public Dictionary<string, int> DonHangTheoTrangThai { get; set; } = new();

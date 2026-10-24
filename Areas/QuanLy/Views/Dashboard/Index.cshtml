@@ -15,9 +15,21 @@
             <span>DOANH THU</span>
             <i class="bi bi-graph-up-arrow text-secondary"></i>
         </div>
-        <div class="val">@(Model.TongDoanhThu > 0 ? Model.TongDoanhThu.ToString("N0") : "158.450.000") ₫</div>
-        <div class="sub">
-            <i class="bi bi-arrow-up-short fs-5"></i> +12.4% so với tháng trước
+        <div class="val">@Model.TongDoanhThu.ToString("N0") ₫</div>
+        <div class="sub @(Model.DoanhThuTangTruong < 0 ? "down" : (Model.DoanhThuTangTruong == 0 ? "text-secondary" : ""))">
+            @if (Model.DoanhThuTangTruong > 0)
+            {
+                <i class="bi bi-arrow-up-short fs-5 text-success"></i><span class="text-success fw-semibold">+@Model.DoanhThuTangTruong.ToString("0.0")%</span>
+            }
+            else if (Model.DoanhThuTangTruong < 0)
+            {
+                <i class="bi bi-arrow-down-short fs-5 text-danger"></i><span class="text-danger fw-semibold">@Model.DoanhThuTangTruong.ToString("0.0")%</span>
+            }
+            else
+            {
+                <i class="bi bi-dash fs-5"></i><span>0.0%</span>
+            }
+            <span class="ms-1">@Model.NhanSoSanh</span>
         </div>
     </div>
 
@@ -26,9 +38,21 @@
             <span>ĐƠN HÀNG MỚI</span>
             <i class="bi bi-receipt text-secondary"></i>
         </div>
-        <div class="val">@(Model.TongDonHangMoi > 0 ? Model.TongDonHangMoi : 184) đơn</div>
-        <div class="sub">
-            <i class="bi bi-arrow-up-short fs-5"></i> +8.1% so với tháng trước
+        <div class="val">@Model.TongDonHangMoi.ToString("N0") đơn</div>
+        <div class="sub @(Model.DonHangTangTruong < 0 ? "down" : (Model.DonHangTangTruong == 0 ? "text-secondary" : ""))">
+            @if (Model.DonHangTangTruong > 0)
+            {
+                <i class="bi bi-arrow-up-short fs-5 text-success"></i><span class="text-success fw-semibold">+@Model.DonHangTangTruong.ToString("0.0")%</span>
+            }
+            else if (Model.DonHangTangTruong < 0)
+            {
+                <i class="bi bi-arrow-down-short fs-5 text-danger"></i><span class="text-danger fw-semibold">@Model.DonHangTangTruong.ToString("0.0")%</span>
+            }
+            else
+            {
+                <i class="bi bi-dash fs-5"></i><span>0.0%</span>
+            }
+            <span class="ms-1">@Model.NhanSoSanh</span>
         </div>
     </div>
 
@@ -143,8 +167,9 @@
                 {
                     <div class="d-flex align-items-center justify-content-between p-2 rounded-3 hover-bg" style="transition:background .15s">
                         <div class="d-flex align-items-center gap-3">
-                            <img src="@(string.IsNullOrEmpty(item.HinhAnh) ? "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=200&auto=format&fit=crop" : item.HinhAnh)" 
-                                 class="amp-prod-thumb" alt="@item.TenSanPham" />
+                            <img src="@(string.IsNullOrEmpty(item.HinhAnh) ? "/images/placeholder.svg" : item.HinhAnh)" 
+                                 class="amp-prod-thumb" alt="@item.TenSanPham" 
+                                 onerror="this.onerror=null;this.src='/images/placeholder.svg';" />
                             <div>
                                 <a href="/QuanLy/SanPham/Sua/@item.SanPhamId" class="text-dark fw-bold text-decoration-none d-block mb-1" style="font-size:13.5px">
                                     @item.TenSanPham

@@ -19,6 +19,7 @@ builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("Emai
 builder.Services.Configure<BankSettings>(builder.Configuration.GetSection("BankSettings"));
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IThongBaoService, ThongBaoService>();
+builder.Services.AddHttpClient<IAiSentimentService, AiSentimentService>();
 
 // ===== Session (lưu tạm thông tin đăng ký / OTP / giỏ hàng phía server) =====
 builder.Services.AddDistributedMemoryCache();

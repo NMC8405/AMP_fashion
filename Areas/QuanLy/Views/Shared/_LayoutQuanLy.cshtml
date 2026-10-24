@@ -1,3 +1,4 @@
+@inject AMPFashionStore.Data.ApplicationDbContext _dbLayout
 @{
     var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
     var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
@@ -8,6 +9,7 @@
     }
     var isAdmin = User.IsInRole("QuanTriVien");
     var userInitial = !string.IsNullOrEmpty(User.Identity?.Name) ? User.Identity.Name.Substring(0, 1).ToUpper() : "A";
+    var soDanhGiaChoDuyet = _dbLayout.DanhGias.Count(d => d.TrangThai == AMPFashionStore.Models.TrangThaiDanhGia.ChoDuyet);
 }
 <!DOCTYPE html>
 <html lang="vi">
@@ -53,8 +55,12 @@
                 </a>
             }
 
-            <a href="/QuanLy/DanhGia/DanhSach" class="@(IsActive("DanhGia") ? "active" : "")">
-                <i class="bi bi-star"></i> Đánh giá
+            <a href="/QuanLy/DanhGia/DanhSach" class="@(IsActive("DanhGia") ? "active" : "") d-flex align-items-center justify-content-between">
+                <span><i class="bi bi-star"></i> Đánh giá</span>
+                @if (soDanhGiaChoDuyet > 0)
+                {
+                    <span class="badge bg-warning text-dark rounded-pill fw-bold" style="font-size:11px" title="@soDanhGiaChoDuyet đánh giá chờ duyệt">@soDanhGiaChoDuyet</span>
+                }
             </a>
             <a href="/QuanLy/MaGiamGia/DanhSach" class="@(IsActive("MaGiamGia") ? "active" : "")">
                 <i class="bi bi-ticket-perforated"></i> Khuyến mãi

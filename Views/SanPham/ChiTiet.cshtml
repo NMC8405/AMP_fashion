@@ -15,20 +15,20 @@
     <div class="row g-5">
         <div class="col-lg-6">
             <div class="amp-product-thumb mb-3" style="aspect-ratio:3/4;position:relative;overflow:hidden;border-radius:6px;background:#f7f7f7">
-                <img id="anhChinh" src="@sp.HinhAnhChinh" alt="@sp.TenSanPham" style="width:100%;height:100%;object-fit:cover;transition:opacity .2s ease-in-out" />
+                <img id="anhChinh" src="@(string.IsNullOrEmpty(sp.HinhAnhChinh) ? "/images/placeholder.svg" : sp.HinhAnhChinh)" alt="@sp.TenSanPham" onerror="this.onerror=null;this.src='/images/placeholder.svg';" style="width:100%;height:100%;object-fit:cover;transition:opacity .2s ease-in-out" />
             </div>
             <div class="d-flex gap-2 flex-wrap" id="galleryThumbs">
-                <img src="@sp.HinhAnhChinh" class="amp-thumb-sm thumb-item active" style="width:68px;height:88px;cursor:pointer;object-fit:cover;border:2px solid var(--amp-ink);border-radius:4px;transition:all .2s" onclick="doiAnhChinh(this.src, null, this)" title="Ảnh chính" />
+                <img src="@(string.IsNullOrEmpty(sp.HinhAnhChinh) ? "/images/placeholder.svg" : sp.HinhAnhChinh)" class="amp-thumb-sm thumb-item active" onerror="this.onerror=null;this.src='/images/placeholder.svg';" style="width:68px;height:88px;cursor:pointer;object-fit:cover;border:2px solid var(--amp-ink);border-radius:4px;transition:all .2s" onclick="doiAnhChinh(this.src, null, this)" title="Ảnh chính" />
                 @foreach (var mau in Model.MauSacsCoSan)
                 {
                     if (Model.AnhTheoMauSac.TryGetValue(mau.Id, out var anhM) && !string.IsNullOrEmpty(anhM) && anhM != sp.HinhAnhChinh)
                     {
-                        <img src="@anhM" class="amp-thumb-sm thumb-item" data-mau-id="@mau.Id" style="width:68px;height:88px;cursor:pointer;object-fit:cover;border:1px solid var(--amp-border);border-radius:4px;transition:all .2s" onclick="chonMauTheoAnh(@mau.Id, '@mau.TenMau', '@anhM', this)" title="Màu @mau.TenMau" />
+                        <img src="@anhM" class="amp-thumb-sm thumb-item" data-mau-id="@mau.Id" onerror="this.onerror=null;this.src='/images/placeholder.svg';" style="width:68px;height:88px;cursor:pointer;object-fit:cover;border:1px solid var(--amp-border);border-radius:4px;transition:all .2s" onclick="chonMauTheoAnh(@mau.Id, '@mau.TenMau', '@anhM', this)" title="Màu @mau.TenMau" />
                     }
                 }
                 @foreach (var a in anhPhu)
                 {
-                    <img src="@a.DuongDan" class="amp-thumb-sm thumb-item" style="width:68px;height:88px;cursor:pointer;object-fit:cover;border:1px solid var(--amp-border);border-radius:4px;transition:all .2s" onclick="doiAnhChinh(this.src, null, this)" />
+                    <img src="@a.DuongDan" class="amp-thumb-sm thumb-item" onerror="this.onerror=null;this.src='/images/placeholder.svg';" style="width:68px;height:88px;cursor:pointer;object-fit:cover;border:1px solid var(--amp-border);border-radius:4px;transition:all .2s" onclick="doiAnhChinh(this.src, null, this)" />
                 }
             </div>
         </div>
@@ -46,7 +46,7 @@
                 {
                     <i class="bi @(i <= Math.Round(diem) ? "bi-star-fill" : "bi-star")"></i>
                 }
-                <span class="cnt">@diem.ToString("0.0") (@sp.DanhGias.Count đánh giá)</span>
+                <span class="cnt">@diem.ToString("0.0") (@sp.SoLuongDanhGia đánh giá)</span>
             </div>
 
             <div class="amp-price-row mb-4" style="font-size:22px">
@@ -142,7 +142,21 @@
                 {
                     <div class="amp-card" style="padding:18px 20px">
                         <div class="d-flex justify-content-between mb-1">
-                            <strong style="font-size:13.5px">@(dg.NguoiDung?.HoTen ?? "Khách hàng")</strong>
+                            <div>
+                                <strong style="font-size:13.5px">@(dg.NguoiDung?.HoTen ?? "Khách hàng")</strong>
+                                @if (dg.TrangThai == TrangThaiDanhGia.ChoDuyet)
+                                {
+                                    <span class="badge bg-warning text-dark ms-2" style="font-size:11px;font-weight:600">
+                                        <i class="bi bi-hourglass-split me-1"></i>Đang chờ duyệt
+                                    </span>
+                                }
+                                else if (dg.TrangThai == TrangThaiDanhGia.TuChoi)
+                                {
+                                    <span class="badge bg-danger ms-2" style="font-size:11px;font-weight:600">
+                                        <i class="bi bi-x-circle me-1"></i>Không được duyệt
+                                    </span>
+                                }
+                            </div>
                             <span style="font-size:12px;color:var(--amp-muted)">@dg.NgayDanhGia.ToString("dd/MM/yyyy")</span>
                         </div>
                         <div class="amp-rating mb-2">

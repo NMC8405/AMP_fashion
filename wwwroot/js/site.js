@@ -10,6 +10,7 @@
     initOtpBoxes();
     initOtpCountdown();
     initPasswordStrength();
+    initPasswordToggle();
     initQtyBoxes();
     initStarPicker();
     initPayOptions();
@@ -140,6 +141,33 @@
 
       if (fill) { fill.style.width = pct + "%"; fill.style.background = color; }
       if (hint) hint.textContent = v ? "Độ mạnh mật khẩu: " + label : "";
+    });
+  }
+
+  // ---------- Hiện / Ẩn mật khẩu ----------
+  function initPasswordToggle() {
+    document.addEventListener("click", function (e) {
+      var btn = e.target.closest(".amp-btn-eye");
+      if (!btn) return;
+      var wrap = btn.closest(".amp-input-password-wrap");
+      if (!wrap) return;
+      var input = wrap.querySelector("input");
+      var icon = btn.querySelector("i");
+      if (input) {
+        if (input.type === "password") {
+          input.type = "text";
+          if (icon) {
+            icon.classList.remove("bi-eye");
+            icon.classList.add("bi-eye-slash");
+          }
+        } else {
+          input.type = "password";
+          if (icon) {
+            icon.classList.remove("bi-eye-slash");
+            icon.classList.add("bi-eye");
+          }
+        }
+      }
     });
   }
 

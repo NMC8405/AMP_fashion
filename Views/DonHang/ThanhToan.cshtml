@@ -46,7 +46,7 @@
                         @foreach (var dong in Model.DongHang)
                         {
                             <div class="d-flex gap-3 align-items-center mb-3">
-                                <img src="@dong.HinhAnh" class="amp-thumb-sm" style="width:56px;height:68px" />
+                                <img src="@(string.IsNullOrEmpty(dong.HinhAnh) ? "/images/placeholder.svg" : dong.HinhAnh)" class="amp-thumb-sm" onerror="this.onerror=null;this.src='/images/placeholder.svg';" style="width:56px;height:68px;object-fit:cover;border-radius:4px" />
                                 <div class="flex-grow-1">
                                     <div style="font-size:13.5px;font-weight:600">@dong.TenSanPham</div>
                                     <div style="font-size:12px;color:var(--amp-muted)">@dong.TenMau · @dong.TenKichThuoc · SL: @dong.SoLuong</div>

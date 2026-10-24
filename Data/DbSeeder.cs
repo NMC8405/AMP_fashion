@@ -58,7 +58,8 @@ namespace AMPFashionStore.Data
 
             if (await db.DanhMucs.AnyAsync())
             {
-                // Dữ liệu đã được khởi tạo trước đó. Không tự ý ghi đè hay gán ảnh cho các sản phẩm trong hệ thống.
+                // Dữ liệu đã được khởi tạo trước đó. Tự động kiểm tra và sửa link ảnh bị lỗi đã biết (nếu có).
+                await SuaLoiAnhDaBietAsync(db);
                 return;
             }
 
@@ -331,10 +332,10 @@ namespace AMPFashionStore.Data
                 }
             ),
             ["Quần Jeans Slim Fit"] = (
-                "https://images.unsplash.com/photo-1542272604-780c96856592?q=80&w=900&auto=format&fit=crop",
+                "https://images.unsplash.com/photo-1555689502-c4b22d76c56f?q=80&w=900&auto=format&fit=crop",
                 new Dictionary<string, string>
                 {
-                    ["Xanh Navy"] = "https://images.unsplash.com/photo-1542272604-780c96856592?q=80&w=900&auto=format&fit=crop",
+                    ["Xanh Navy"] = "https://images.unsplash.com/photo-1555689502-c4b22d76c56f?q=80&w=900&auto=format&fit=crop",
                     ["Đen"] = "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?q=80&w=900&auto=format&fit=crop",
                     ["Xám"] = "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?q=80&w=900&auto=format&fit=crop"
                 }
@@ -635,6 +636,43 @@ namespace AMPFashionStore.Data
                 {
                     d.TongTien = Math.Max(0, d.TamTinh + d.PhiVanChuyen - d.SoTienGiamGia);
                 }
+                await db.SaveChangesAsync();
+            }
+
+            await SuaLoiAnhDaBietAsync(db);
+        }
+
+        private static async Task SuaLoiAnhDaBietAsync(ApplicationDbContext db)
+        {
+            const string oldBrokenId = "1542272604-780c96856592";
+            const string newJeansUrl = "https://images.unsplash.com/photo-1555689502-c4b22d76c56f?q=80&w=900&auto=format&fit=crop";
+
+            var brokenSanPhams = await db.SanPhams.Where(s => s.HinhAnhChinh != null && s.HinhAnhChinh.Contains(oldBrokenId)).ToListAsync();
+            foreach (var sp in brokenSanPhams)
+            {
+                sp.HinhAnhChinh = newJeansUrl;
+            }
+
+            var brokenBienThes = await db.BienTheSanPhams.Where(b => b.HinhAnh != null && b.HinhAnh.Contains(oldBrokenId)).ToListAsync();
+            foreach (var bt in brokenBienThes)
+            {
+                bt.HinhAnh = newJeansUrl;
+            }
+
+            var brokenHinhAnhs = await db.HinhAnhSanPhams.Where(h => h.DuongDan != null && h.DuongDan.Contains(oldBrokenId)).ToListAsync();
+            foreach (var ha in brokenHinhAnhs)
+            {
+                ha.DuongDan = newJeansUrl;
+            }
+
+            var brokenChiTiets = await db.ChiTietDonHangs.Where(c => c.HinhAnh != null && c.HinhAnh.Contains(oldBrokenId)).ToListAsync();
+            foreach (var ct in brokenChiTiets)
+            {
+                ct.HinhAnh = newJeansUrl;
+            }
+
+            if (brokenSanPhams.Count > 0 || brokenBienThes.Count > 0 || brokenHinhAnhs.Count > 0 || brokenChiTiets.Count > 0)
+            {
                 await db.SaveChangesAsync();
             }
         }

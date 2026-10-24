@@ -12,14 +12,20 @@
         <form asp-action="DatLaiMatKhau" method="post">
             <div class="amp-field">
                 <label asp-for="MatKhauMoi" class="amp-label"></label>
-                <input asp-for="MatKhauMoi" class="form-control" placeholder="Nhập mật khẩu mới" data-pwd-strength autofocus />
+                <div class="amp-input-password-wrap">
+                    <input asp-for="MatKhauMoi" class="form-control" placeholder="Nhập mật khẩu mới" data-pwd-strength autofocus />
+                    <button type="button" class="amp-btn-eye" aria-label="Hiện/ẩn mật khẩu" tabindex="-1"><i class="bi bi-eye"></i></button>
+                </div>
                 <div class="amp-strength" data-strength-bar><span></span></div>
                 <div class="amp-strength-hint" data-strength-hint></div>
                 <span asp-validation-for="MatKhauMoi" class="text-danger"></span>
             </div>
             <div class="amp-field">
                 <label asp-for="XacNhanMatKhauMoi" class="amp-label"></label>
-                <input asp-for="XacNhanMatKhauMoi" class="form-control" placeholder="Nhập lại mật khẩu mới" />
+                <div class="amp-input-password-wrap">
+                    <input asp-for="XacNhanMatKhauMoi" class="form-control" placeholder="Nhập lại mật khẩu mới" />
+                    <button type="button" class="amp-btn-eye" aria-label="Hiện/ẩn mật khẩu" tabindex="-1"><i class="bi bi-eye"></i></button>
+                </div>
                 <span asp-validation-for="XacNhanMatKhauMoi" class="text-danger"></span>
             </div>
             <button type="submit" class="amp-btn amp-btn-primary amp-btn-block">Đặt lại mật khẩu</button>

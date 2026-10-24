@@ -93,5 +93,15 @@ namespace AMPFashionStore.ViewModels
         [Required(ErrorMessage = "Vui lòng nhập nội dung đánh giá")]
         [StringLength(1000)]
         public string NoiDung { get; set; } = string.Empty;
+
+        /// <summary>Khách hàng xác nhận vẫn gửi dù hệ thống AI cảnh báo nội dung tiêu cực</summary>
+        public bool XacNhanGuiTieuCuc { get; set; } = false;
+    }
+
+    /// <summary>Request kiểm tra cảm xúc bình luận qua AI trước khi submit</summary>
+    public class KiemTraDanhGiaRequest
+    {
+        public string NoiDung { get; set; } = string.Empty;
+        public int SoSao { get; set; } = 5;
     }
 }

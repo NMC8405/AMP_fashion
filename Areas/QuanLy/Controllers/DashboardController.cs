@@ -33,30 +33,56 @@ namespace AMPFashionStore.Areas.QuanLy.Controllers
         {
             var ky = kyBaoCao ?? "30ngay";
             DateTime tu;
-            var den = DateTime.Today;
+            DateTime den = DateTime.Today;
+            DateTime tuKyTruoc;
+            DateTime denKyTruoc;
+            string nhanSoSanh;
 
             switch (ky)
             {
                 case "homnay":
                     tu = DateTime.Today;
+                    den = DateTime.Today;
+                    tuKyTruoc = DateTime.Today.AddDays(-1);
+                    denKyTruoc = DateTime.Today.AddDays(-1);
+                    nhanSoSanh = "so với hôm qua";
                     break;
                 case "7ngay":
                     tu = DateTime.Today.AddDays(-6);
+                    den = DateTime.Today;
+                    tuKyTruoc = DateTime.Today.AddDays(-13);
+                    denKyTruoc = DateTime.Today.AddDays(-7);
+                    nhanSoSanh = "so với 7 ngày trước";
                     break;
                 case "3thang":
                     tu = DateTime.Today.AddMonths(-3);
+                    den = DateTime.Today;
+                    tuKyTruoc = DateTime.Today.AddMonths(-6);
+                    denKyTruoc = DateTime.Today.AddMonths(-3).AddDays(-1);
+                    nhanSoSanh = "so với 3 tháng trước";
                     break;
                 case "12thang":
                     tu = DateTime.Today.AddYears(-1);
+                    den = DateTime.Today;
+                    tuKyTruoc = DateTime.Today.AddYears(-2);
+                    denKyTruoc = DateTime.Today.AddYears(-1).AddDays(-1);
+                    nhanSoSanh = "so với năm trước";
                     break;
                 case "30ngay":
                 default:
+                    ky = "30ngay";
                     tu = DateTime.Today.AddDays(-29);
+                    den = DateTime.Today;
+                    tuKyTruoc = DateTime.Today.AddDays(-59);
+                    denKyTruoc = DateTime.Today.AddDays(-30);
+                    nhanSoSanh = "so với 30 ngày trước";
                     break;
             }
 
             var denCoGio = den.AddDays(1).AddTicks(-1);
+            var denKyTruocCoGio = denKyTruoc.AddDays(1).AddTicks(-1);
 
+            // 1. Đơn hàng thuộc kỳ báo cáo hiện tại
             var donHangs = await _db.DonHangs
                 .Include(d => d.ChiTietDonHangs)
                 .Where(d => d.NgayDat >= tu && d.NgayDat <= denCoGio)
@@ -67,38 +93,86 @@ namespace AMPFashionStore.Areas.QuanLy.Controllers
             var tongDoanhThu = donHopLe.Sum(d => d.TongTien);
             var tongDon = donHopLe.Count;
             var giaTriTrungBinh = tongDon > 0 ? (tongDoanhThu / tongDon) : 0;
-            // Ước tính lợi nhuận gộp thời trang ~38-40%
-            var loiNhuan = tongDoanhThu * 0.384m;
+            var loiNhuan = tongDoanhThu * 0.384m; // Ước tính lợi nhuận gộp thời trang ~38.4%
+
+            // 2. Đơn hàng kỳ trước đó để so sánh chính xác theo từng mốc (hôm qua, 7 ngày trước, 30 ngày trước...)
+            var donHangsKyTruoc = await _db.DonHangs
+                .Include(d => d.ChiTietDonHangs)
+                .Where(d => d.NgayDat >= tuKyTruoc && d.NgayDat <= denKyTruocCoGio)
+                .ToListAsync();
+
+            var donHopLeKyTruoc = donHangsKyTruoc.Where(d => d.TrangThaiDonHang != TrangThaiDonHang.DaHuy).ToList();
+
+            var tongDoanhThuKyTruoc = donHopLeKyTruoc.Sum(d => d.TongTien);
+            var tongDonKyTruoc = donHopLeKyTruoc.Count;
+            var giaTriTrungBinhKyTruoc = tongDonKyTruoc > 0 ? (tongDoanhThuKyTruoc / tongDonKyTruoc) : 0;
+            var loiNhuanKyTruoc = tongDoanhThuKyTruoc * 0.384m;
+
+            double TinhTangTruong(decimal hienTai, decimal kyTruoc)
+            {
+                if (kyTruoc == 0) return hienTai > 0 ? 100.0 : 0.0;
+                return Math.Round((double)((hienTai - kyTruoc) / kyTruoc) * 100.0, 1);
+            }
+
+            double TinhTangTruongInt(int hienTai, int kyTruoc)
+            {
+                if (kyTruoc == 0) return hienTai > 0 ? 100.0 : 0.0;
+                return Math.Round(((double)(hienTai - kyTruoc) / kyTruoc) * 100.0, 1);
+            }
 
             var model = new BaoCaoViewModel
             {
                 KyBaoCao = ky,
+                NhanSoSanh = nhanSoSanh,
                 TongDoanhThu = tongDoanhThu,
+                DoanhThuTangTruong = TinhTangTruong(tongDoanhThu, tongDoanhThuKyTruoc),
                 TongDonHang = tongDon,
+                DonHangTangTruong = TinhTangTruongInt(tongDon, tongDonKyTruoc),
                 GiaTriDonHangTrungBinh = giaTriTrungBinh,
-                LoiNhuan = loiNhuan
+                GiaTriDonHangTangTruong = TinhTangTruong(giaTriTrungBinh, giaTriTrungBinhKyTruoc),
+                LoiNhuan = loiNhuan,
+                LoiNhuanTangTruong = TinhTangTruong(loiNhuan, loiNhuanKyTruoc)
             };
 
-            // 1. Doanh thu theo ngày
-            int step = (den - tu).TotalDays <= 31 ? 1 : Math.Max(2, (int)((den - tu).TotalDays / 15));
-            for (var ngay = tu; ngay <= den; ngay = ngay.AddDays(step))
+            // 3. Doanh thu theo ngày hoặc theo các khung giờ (nếu xem hôm nay)
+            if (ky == "homnay")
             {
-                var ngayCuoi = ngay.AddDays(step - 1);
-                var donTrongKhoang = donHopLe.Where(d => d.NgayDat.Date >= ngay.Date && d.NgayDat.Date <= ngayCuoi.Date).ToList();
-                model.DoanhThuTheoNgay.Add(new DiemDoanhThuTheoNgay
+                int[] gioMoc = new[] { 0, 4, 8, 12, 16, 20, 24 };
+                for (int i = 0; i < gioMoc.Length - 1; i++)
                 {
-                    Ngay = ngay,
-                    DoanhThu = donTrongKhoang.Sum(d => d.TongTien),
-                    SoDonHang = donTrongKhoang.Count
-                });
+                    var tuGio = DateTime.Today.AddHours(gioMoc[i]);
+                    var denGio = DateTime.Today.AddHours(gioMoc[i + 1]).AddTicks(-1);
+                    var donTrongGio = donHopLe.Where(d => d.NgayDat >= tuGio && d.NgayDat <= denGio).ToList();
+                    model.DoanhThuTheoNgay.Add(new DiemDoanhThuTheoNgay
+                    {
+                        Ngay = tuGio,
+                        DoanhThu = donTrongGio.Sum(d => d.TongTien),
+                        SoDonHang = donTrongGio.Count
+                    });
+                }
+            }
+            else
+            {
+                int step = (den - tu).TotalDays <= 31 ? 1 : Math.Max(2, (int)((den - tu).TotalDays / 15));
+                for (var ngay = tu; ngay <= den; ngay = ngay.AddDays(step))
+                {
+                    var ngayCuoi = ngay.AddDays(step - 1);
+                    var donTrongKhoang = donHopLe.Where(d => d.NgayDat.Date >= ngay.Date && d.NgayDat.Date <= ngayCuoi.Date).ToList();
+                    model.DoanhThuTheoNgay.Add(new DiemDoanhThuTheoNgay
+                    {
+                        Ngay = ngay,
+                        DoanhThu = donTrongKhoang.Sum(d => d.TongTien),
+                        SoDonHang = donTrongKhoang.Count
+                    });
+                }
             }
 
-            // 2. Trạng thái đơn hàng
+            // 4. Trạng thái đơn hàng thực tế
             model.DonHangTheoTrangThai = donHangs
                 .GroupBy(d => d.TenTrangThai)
                 .ToDictionary(g => g.Key, g => g.Count());
 
-            // 3. Doanh thu theo danh mục
+            // 5. Doanh thu theo danh mục
             var danhMucs = await _db.DanhMucs.ToListAsync();
             var spCategoryMap = await _db.SanPhams.ToDictionaryAsync(s => s.Id, s => s.DanhMucId);
             foreach (var dm in danhMucs)
@@ -110,7 +184,7 @@ namespace AMPFashionStore.Areas.QuanLy.Controllers
                 model.DoanhThuTheoDanhMuc[dm.TenDanhMuc] = doanhThuDm;
             }
 
-            // 4. Chi tiết hiệu quả sản phẩm
+            // 6. Chi tiết hiệu quả sản phẩm thực tế
             model.ChiTietHieuQuaSanPham = donHopLe
                 .SelectMany(d => d.ChiTietDonHangs)
                 .Where(c => c.SanPhamId.HasValue)
@@ -174,6 +248,10 @@ namespace AMPFashionStore.Areas.QuanLy.Controllers
             var den = (denNgay ?? DateTime.Today).Date;
             var denCoGio = den.AddDays(1).AddTicks(-1);
 
+            var soNgay = (den - tu).TotalDays + 1;
+            var tuKyTruoc = tu.AddDays(-soNgay);
+            var denKyTruoc = tu.AddTicks(-1);
+
             var donHangTrongKy = await _db.DonHangs
                 .Include(d => d.ChiTietDonHangs)
                 .Where(d => d.NgayDat >= tu && d.NgayDat <= denCoGio)
@@ -181,12 +259,44 @@ namespace AMPFashionStore.Areas.QuanLy.Controllers
 
             var donHopLe = donHangTrongKy.Where(d => d.TrangThaiDonHang != TrangThaiDonHang.DaHuy).ToList();
 
+            var donHangKyTruoc = await _db.DonHangs
+                .Where(d => d.NgayDat >= tuKyTruoc && d.NgayDat <= denKyTruoc && d.TrangThaiDonHang != TrangThaiDonHang.DaHuy)
+                .ToListAsync();
+
+            var dtHienTai = donHopLe.Sum(d => d.TongTien);
+            var dtKyTruoc = donHangKyTruoc.Sum(d => d.TongTien);
+            var donHienTai = donHangTrongKy.Count;
+            var donKyTruoc = donHangKyTruoc.Count;
+
+            string nhanSoSanh = soNgay switch
+            {
+                <= 1 => "so với hôm qua",
+                <= 7 => "so với 7 ngày trước",
+                <= 31 => "so với 30 ngày trước",
+                _ => "so với kỳ trước"
+            };
+
+            double TinhTangTruong(decimal hienTai, decimal kyTruoc)
+            {
+                if (kyTruoc == 0) return hienTai > 0 ? 100.0 : 0.0;
+                return Math.Round((double)((hienTai - kyTruoc) / kyTruoc) * 100.0, 1);
+            }
+
+            double TinhTangTruongInt(int hienTai, int kyTruoc)
+            {
+                if (kyTruoc == 0) return hienTai > 0 ? 100.0 : 0.0;
+                return Math.Round(((double)(hienTai - kyTruoc) / kyTruoc) * 100.0, 1);
+            }
+
             var model = new ThongKeViewModel
             {
                 TuNgay = tu,
                 DenNgay = den,
-                TongDonHangMoi = donHangTrongKy.Count,
-                TongDoanhThu = donHopLe.Sum(d => d.TongTien),
+                NhanSoSanh = nhanSoSanh,
+                TongDonHangMoi = donHienTai,
+                DonHangTangTruong = TinhTangTruongInt(donHienTai, donKyTruoc),
+                TongDoanhThu = dtHienTai,
+                DoanhThuTangTruong = TinhTangTruong(dtHienTai, dtKyTruoc),
                 TongSanPhamDaBan = donHopLe.SelectMany(d => d.ChiTietDonHangs).Sum(c => c.SoLuong),
                 TongKhachHangMoi = await _db.NguoiDungs.CountAsync(n => n.VaiTro == VaiTro.KhachHang && n.NgayTao >= tu && n.NgayTao <= denCoGio),
                 TongKhachHang = await _db.NguoiDungs.CountAsync(n => n.VaiTro == VaiTro.KhachHang),

@@ -6,39 +6,39 @@
         <span asp-validation-for="Ma" class="text-danger"></span>
     </div>
     <div class="amp-field">
-        <label asp-for="MoTa" class="amp-label"><span class="opt">(tùy chọn)</span></label>
-        <input asp-for="MoTa" class="form-control" />
+        <label asp-for="MoTa" class="amp-label">Mô tả mã giảm giá <span class="opt">(tùy chọn)</span></label>
+        <input asp-for="MoTa" class="form-control" placeholder="Ví dụ: Giảm 50K cho đơn từ 300K mừng khai trương..." />
     </div>
     <div class="row">
         <div class="col-md-6">
             <div class="amp-field">
-                <label asp-for="LoaiGiamGia" class="amp-label"></label>
+                <label asp-for="LoaiGiamGia" class="amp-label">Loại giảm giá</label>
                 <select asp-for="LoaiGiamGia" class="form-select" asp-items="Html.GetEnumSelectList<LoaiGiamGia>()"></select>
             </div>
         </div>
         <div class="col-md-6">
             <div class="amp-field">
                 <label asp-for="GiaTri" class="amp-label">Giá trị (% hoặc đ)</label>
-                <input asp-for="GiaTri" class="form-control" type="number" />
+                <input asp-for="GiaTri" class="form-control" type="number" placeholder="Nhập số % hoặc số tiền" />
                 <span asp-validation-for="GiaTri" class="text-danger"></span>
             </div>
         </div>
         <div class="col-md-6">
             <div class="amp-field">
-                <label asp-for="GiaTriDonHangToiThieu" class="amp-label"></label>
-                <input asp-for="GiaTriDonHangToiThieu" class="form-control" type="number" />
+                <label asp-for="GiaTriDonHangToiThieu" class="amp-label">Đơn hàng tối thiểu (VNĐ)</label>
+                <input asp-for="GiaTriDonHangToiThieu" class="form-control" type="number" placeholder="0 nếu không yêu cầu" />
             </div>
         </div>
         <div class="col-md-6">
             <div class="amp-field">
-                <label asp-for="SoTienGiamToiDa" class="amp-label"><span class="opt">(áp dụng cho loại %)</span></label>
-                <input asp-for="SoTienGiamToiDa" class="form-control" type="number" />
+                <label asp-for="SoTienGiamToiDa" class="amp-label">Số tiền giảm tối đa <span class="opt">(áp dụng cho loại %)</span></label>
+                <input asp-for="SoTienGiamToiDa" class="form-control" type="number" placeholder="Ví dụ: 100.000 (VNĐ)" />
             </div>
         </div>
         <div class="col-md-6">
             <div class="amp-field">
-                <label asp-for="SoLuongToiDa" class="amp-label"><span class="opt">(để trống = không giới hạn)</span></label>
-                <input asp-for="SoLuongToiDa" class="form-control" type="number" />
+                <label asp-for="SoLuongToiDa" class="amp-label">Số lượng mã tối đa <span class="opt">(để trống = không giới hạn)</span></label>
+                <input asp-for="SoLuongToiDa" class="form-control" type="number" placeholder="Để trống nếu không giới hạn" />
             </div>
         </div>
         <div class="col-md-6"></div>

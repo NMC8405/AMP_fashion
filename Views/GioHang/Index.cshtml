@@ -60,9 +60,10 @@
                                     <td>
                                         <div class="d-flex align-items-center gap-3">
                                             <a asp-controller="SanPham" asp-action="ChiTiet" asp-route-id="@bt.SanPhamId">
-                                                <img src="@(bt.SanPham?.HinhAnhChinh ?? "/images/placeholder.jpg")" 
+                                                <img src="@(bt.SanPham?.HinhAnhChinh ?? "/images/placeholder.svg")" 
                                                      alt="@bt.SanPham?.TenSanPham" 
                                                      class="amp-prod-thumb" 
+                                                     onerror="this.onerror=null;this.src='/images/placeholder.svg';" 
                                                      style="width:68px;height:82px;object-fit:cover;border-radius:6px;border:1px solid #E5E7EB" />
                                             </a>
                                             <div class="amp-cart-item-meta">

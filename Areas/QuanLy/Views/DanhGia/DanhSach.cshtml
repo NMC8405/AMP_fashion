@@ -1,23 +1,195 @@
 @model List<DanhGia>
 @{
-    ViewData["Title"] = "Đánh giá";
+    ViewData["Title"] = "Quản lý Đánh giá & Kiểm duyệt AI";
     int? soSao = ViewBag.SoSao;
     string trangThai = ViewBag.TrangThai ?? "";
+    string camXuc = ViewBag.CamXuc ?? "";
     int tongDanhGia = ViewBag.TongDanhGia ?? Model.Count;
+    int choDuyet = ViewBag.ChoDuyet ?? Model.Count(x => x.TrangThai == TrangThaiDanhGia.ChoDuyet);
+    int daDuyet = ViewBag.DaDuyet ?? Model.Count(x => x.TrangThai == TrangThaiDanhGia.DaDuyet);
+    int tuChoi = ViewBag.TuChoi ?? Model.Count(x => x.TrangThai == TrangThaiDanhGia.TuChoi);
+    int tieuCuc = ViewBag.TieuCuc ?? Model.Count(x => x.NhanCamXuc == "negative" || x.BiCanhBaoTieuCuc);
     int choPhanHoi = ViewBag.ChoPhanHoi ?? Model.Count(x => string.IsNullOrEmpty(x.PhanHoi));
     int daPhanHoi = ViewBag.DaPhanHoi ?? Model.Count(x => !string.IsNullOrEmpty(x.PhanHoi));
 }
 
-<!-- FILTER & SEARCH BAR (FIGMA STYLE) -->
-<div class="amp-action-bar">
-    <form method="get" class="d-flex align-items-center gap-3 flex-wrap flex-grow-1">
-        <div class="amp-search-box">
+<style>
+    .ai-stat-card {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 16px 20px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        transition: all 0.2s ease;
+    }
+    .ai-stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.06);
+    }
+    .ai-stat-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        flex-shrink: 0;
+    }
+    .badge-sentiment-negative {
+        background: #fee2e2;
+        color: #b91c1c;
+        border: 1px solid #fca5a5;
+    }
+    .badge-sentiment-positive {
+        background: #dcfce7;
+        color: #15803d;
+        border: 1px solid #86efac;
+    }
+    .badge-sentiment-normal {
+        background: #f3f4f6;
+        color: #374151;
+        border: 1px solid #d1d5db;
+    }
+    .badge-moderation-pending {
+        background: #f3f4f6;
+        color: #4b5563;
+        border: 1px solid #d1d5db;
+        font-weight: 600;
+    }
+    .badge-moderation-approved {
+        background: #ecfdf5;
+        color: #047857;
+        border: 1px solid #a7f3d0;
+    }
+    .badge-moderation-rejected {
+        background: #fef2f2;
+        color: #991b1b;
+        border: 1px solid #fecaca;
+    }
+    .review-overlay-card {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 16px 20px;
+        transition: all 0.2s ease;
+    }
+    .review-overlay-card:hover {
+        border-color: #cbd5e1;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+    }
+    .review-quote-container {
+        background: #f8fafc;
+        border-left: 4px solid #111827;
+        border-radius: 6px;
+        padding: 14px 18px;
+        font-size: 14px;
+        line-height: 1.6;
+        color: #1f2937;
+    }
+</style>
+
+<!-- STATS SUMMARY (AI & MODERATION) -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="ai-stat-card">
+            <div class="ai-stat-icon bg-light text-dark">
+                <i class="bi bi-chat-square-text"></i>
+            </div>
+            <div>
+                <div class="text-muted small fw-medium">Tổng đánh giá</div>
+                <div class="fs-4 fw-bold text-dark">@tongDanhGia</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <a href="@Url.Action("DanhSach", new { trangThai = "cho_duyet" })" class="text-decoration-none">
+            <div class="ai-stat-card">
+                <div class="ai-stat-icon bg-light text-secondary">
+                    <i class="bi bi-hourglass-split"></i>
+                </div>
+                <div>
+                    <div class="text-muted small fw-medium">Chờ duyệt (Cảnh báo AI)</div>
+                    <div class="fs-4 fw-bold text-dark">@choDuyet</div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-6 col-md-3">
+        <a href="@Url.Action("DanhSach", new { camXuc = "negative" })" class="text-decoration-none">
+            <div class="ai-stat-card">
+                <div class="ai-stat-icon bg-danger bg-opacity-10 text-danger">
+                    <i class="bi bi-emoji-angry"></i>
+                </div>
+                <div>
+                    <div class="text-muted small fw-medium">Tiêu cực (AI PhoBERT)</div>
+                    <div class="fs-4 fw-bold text-danger">@tieuCuc</div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-6 col-md-3">
+        <a href="@Url.Action("DanhSach", new { trangThai = "da_duyet" })" class="text-decoration-none">
+            <div class="ai-stat-card">
+                <div class="ai-stat-icon bg-success bg-opacity-10 text-success">
+                    <i class="bi bi-patch-check"></i>
+                </div>
+                <div>
+                    <div class="text-muted small fw-medium">Đã phê duyệt</div>
+                    <div class="fs-4 fw-bold text-success">@daDuyet</div>
+                </div>
+            </div>
+        </a>
+    </div>
+</div>
+
+<!-- MODERATION ALERT BANNER (CHUẨN TONE XÁM TỐI GIẢN) -->
+@if (choDuyet > 0)
+{
+    <div class="alert bg-white border border-secondary-subtle shadow-sm rounded-3 py-3 px-4 mb-4 d-flex align-items-center justify-content-between flex-wrap gap-3">
+        <div class="d-flex align-items-center gap-3">
+            <div class="bg-secondary bg-opacity-10 text-secondary rounded-circle d-flex align-items-center justify-content-center" style="width:40px;height:40px;flex-shrink:0">
+                <i class="bi bi-hourglass-split fs-5"></i>
+            </div>
+            <div>
+                <strong class="d-block text-dark">Có @choDuyet đánh giá đang chờ xét duyệt</strong>
+                <span style="font-size:13px;color:#4b5563">Hệ thống AI PhoBERT đã phân loại và gắn cờ các đánh giá cần quản trị viên kiểm tra trước khi hiển thị.</span>
+            </div>
+        </div>
+        <a href="@Url.Action("DanhSach", new { trangThai = "cho_duyet" })" class="btn btn-outline-secondary rounded-pill px-4 fw-semibold shadow-sm" style="font-size:13px">
+            <i class="bi bi-funnel me-1"></i>Xem danh sách chờ duyệt (@choDuyet)
+        </a>
+    </div>
+}
+
+<!-- FILTER & SEARCH BAR -->
+<div class="amp-action-bar mb-3">
+    <form method="get" class="d-flex align-items-center gap-2 flex-wrap flex-grow-1">
+        <div class="amp-search-box flex-grow-1" style="min-width:260px">
             <i class="bi bi-search"></i>
-            <input type="text" name="tuKhoa" value="@ViewBag.TuKhoa" placeholder="Tìm tên, email, số điện thoại, nội dung..." />
+            <input type="text" name="tuKhoa" value="@ViewBag.TuKhoa" placeholder="Tìm tên khách, sản phẩm, nội dung..." />
         </div>
 
+        <select name="trangThai" class="amp-select-filter" onchange="this.form.submit()">
+            <option value="">Trạng thái duyệt: Tất cả</option>
+            <option value="cho_duyet" selected="@(trangThai == "cho_duyet")">Chờ duyệt (@choDuyet)</option>
+            <option value="da_duyet" selected="@(trangThai == "da_duyet")">Đã duyệt (@daDuyet)</option>
+            <option value="tu_choi" selected="@(trangThai == "tu_choi")">Đã từ chối (@tuChoi)</option>
+            <option value="cho_phan_hoi" selected="@(trangThai == "cho_phan_hoi")">Chưa phản hồi (@choPhanHoi)</option>
+            <option value="da_phan_hoi" selected="@(trangThai == "da_phan_hoi")">Đã phản hồi (@daPhanHoi)</option>
+        </select>
+
+        <select name="camXuc" class="amp-select-filter" onchange="this.form.submit()">
+            <option value="">Cảm xúc AI: Tất cả</option>
+            <option value="negative" selected="@(camXuc == "negative")">🚨 Tiêu cực (Negative)</option>
+            <option value="normal" selected="@(camXuc == "normal")">😐 Bình thường (Normal)</option>
+            <option value="positive" selected="@(camXuc == "positive")">😊 Tích cực (Positive)</option>
+        </select>
+
         <select name="soSao" class="amp-select-filter" onchange="this.form.submit()">
-            <option value="">Số sao: 1-5 sao</option>
+            <option value="">Số sao: Tất cả</option>
             <option value="5" selected="@(soSao == 5)">5 sao ⭐⭐⭐⭐⭐</option>
             <option value="4" selected="@(soSao == 4)">4 sao ⭐⭐⭐⭐</option>
             <option value="3" selected="@(soSao == 3)">3 sao ⭐⭐⭐</option>
@@ -25,34 +197,44 @@
             <option value="1" selected="@(soSao == 1)">1 sao ⭐</option>
         </select>
 
-        <select name="trangThai" class="amp-select-filter" onchange="this.form.submit()">
-            <option value="">Trạng thái: Tất cả</option>
-            <option value="cho_phan_hoi" selected="@(trangThai == "cho_phan_hoi")">Chờ phản hồi (@choPhanHoi)</option>
-            <option value="da_phan_hoi" selected="@(trangThai == "da_phan_hoi")">Đã phản hồi (@daPhanHoi)</option>
-        </select>
+        @if (!string.IsNullOrEmpty(ViewBag.TuKhoa) || !string.IsNullOrEmpty(trangThai) || !string.IsNullOrEmpty(camXuc) || soSao.HasValue)
+        {
+            <a href="@Url.Action("DanhSach")" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-2" title="Xóa bộ lọc">
+                <i class="bi bi-x-circle me-1"></i>Xóa lọc
+            </a>
+        }
+    </form>
+
+    <form asp-action="DongBoTatCaAI" method="post" class="d-inline ms-auto">
+        @Html.AntiForgeryToken()
+        <button type="submit" class="btn btn-sm btn-dark rounded-pill px-3 py-2 fw-semibold d-inline-flex align-items-center gap-1 shadow-sm" style="font-size:12.5px" title="Quét và phân tích toàn bộ đánh giá bằng mô hình PhoBERT-AMP">
+            <i class="bi bi-stars text-light"></i> Quét AI toàn bộ
+        </button>
     </form>
 </div>
 
 <!-- REVIEW TABLE CARD -->
 <div class="amp-box-card">
     <div class="table-responsive">
-        <table class="amp-table-modern">
+        <table class="amp-table-modern align-middle">
             <thead>
                 <tr>
-                    <th>KHÁCH HÀNG</th>
-                    <th>SẢN PHẨM</th>
-                    <th style="min-width:125px;width:125px">SỐ SAO</th>
-                    <th style="min-width:240px">NỘI DUNG ĐÁNH GIÁ</th>
-                    <th>PHẢN HỒI</th>
-                    <th>NGÀY ĐÁNH GIÁ</th>
-                    <th>THAO TÁC</th>
+                    <th style="min-width:160px">KHÁCH HÀNG</th>
+                    <th style="min-width:160px">SẢN PHẨM</th>
+                    <th style="min-width:110px">SỐ SAO</th>
+                    <th style="min-width:260px">NỘI DUNG ĐÁNH GIÁ</th>
+                    <th style="min-width:140px">CẢM XÚC AI</th>
+                    <th style="min-width:130px">KIỂM DUYỆT</th>
+                    <th style="min-width:120px">PHẢN HỒI</th>
+                    <th style="min-width:100px">NGÀY GỬI</th>
+                    <th style="min-width:180px">THAO TÁC</th>
                 </tr>
             </thead>
             <tbody>
                 @if (Model.Count == 0)
                 {
                     <tr>
-                        <td colspan="7" class="text-center py-5 text-muted">
+                        <td colspan="9" class="text-center py-5 text-muted">
                             <i class="bi bi-chat-square-quote fs-2 d-block mb-2 text-secondary"></i>
                             Không tìm thấy đánh giá nào theo điều kiện lọc.
                         </td>
@@ -69,83 +251,228 @@
                                     @initial
                                 </div>
                                 <div>
-                                    <div class="fw-bold text-dark">@(dg.NguoiDung?.HoTen ?? "Khách hàng")</div>
+                                    <div class="fw-bold text-dark" style="font-size:13px">@(dg.NguoiDung?.HoTen ?? "Khách hàng")</div>
                                     <div class="text-muted" style="font-size:11.5px">@(dg.NguoiDung?.Email ?? "")</div>
                                 </div>
                             </div>
                         </td>
                         <td>
-                            <div class="fw-semibold text-dark" style="max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
-                                @(dg.SanPham?.TenSanPham ?? "Sản phẩm")
+                            <div class="fw-semibold text-dark" style="max-width:170px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="@(dg.SanPham?.TenSanPham)">
+                                <a href="/SanPham/ChiTiet/@dg.SanPhamId" target="_blank" class="text-dark text-decoration-none">
+                                    @(dg.SanPham?.TenSanPham ?? "Sản phẩm")
+                                </a>
                             </div>
                             @if (dg.DonHang != null)
                             {
                                 <div class="text-muted" style="font-size:11px">Đơn: #@dg.DonHang.MaDonHang</div>
                             }
                         </td>
-                        <td style="white-space:nowrap;min-width:125px">
+                        <td style="white-space:nowrap">
                             <div class="amp-star-rating">
                                 @for (int i = 1; i <= 5; i++)
                                 {
                                     if (i <= dg.SoSao)
                                     {
-                                        <i class="bi bi-star-fill"></i>
+                                        <i class="bi bi-star-fill text-warning"></i>
                                     }
                                     else
                                     {
-                                        <i class="bi bi-star-fill off"></i>
+                                        <i class="bi bi-star-fill off text-muted"></i>
                                     }
                                 }
                             </div>
                         </td>
-                        <td>
-                            <p class="mb-1 text-dark" style="font-size:13px;line-height:1.4">
+                        <td style="cursor:pointer" data-bs-toggle="modal" data-bs-target="#modalChiTiet_@dg.Id" title="Nhấp để mở xem chi tiết bình luận trong overlay">
+                            <div class="mb-1 text-dark" style="font-size:13px;line-height:1.45">
                                 "@dg.NoiDung"
-                            </p>
-                            @if (!string.IsNullOrEmpty(dg.PhanHoi))
+                            </div>
+                            @if (dg.TrangThai == TrangThaiDanhGia.TuChoi && !string.IsNullOrEmpty(dg.LyDoTuChoi))
                             {
-                                <div class="p-2 rounded bg-light border mt-1" style="font-size:12px;color:#4B5563">
-                                    <strong class="text-dark">Phản hồi của shop:</strong> @dg.PhanHoi
+                                <div class="p-2 rounded bg-danger bg-opacity-10 border border-danger-subtle text-danger mb-1" style="font-size:11.5px">
+                                    <strong>Lý do từ chối:</strong> @dg.LyDoTuChoi
                                 </div>
                             }
+                            <span class="text-secondary d-inline-flex align-items-center gap-1" style="font-size:11px;font-weight:600">
+                                <i class="bi bi-window-stack"></i>Xem overlay chi tiết
+                            </span>
                         </td>
                         <td>
-                            @if (!string.IsNullOrEmpty(dg.PhanHoi))
+                            @* Badge Cảm xúc AI PhoBERT: ĐỎ - XANH - XÁM *@
+                            @if (string.Equals(dg.NhanCamXuc, "negative", StringComparison.OrdinalIgnoreCase) || dg.BiCanhBaoTieuCuc)
                             {
-                                <div class="mb-1"><span class="amp-pill amp-pill-green">Đã phản hồi</span></div>
-                                <div style="font-size:12px;color:#374151;max-width:220px;white-space:normal;line-height:1.35">
-                                    <strong>Shop:</strong> @dg.PhanHoi
-                                </div>
-                                @if (dg.NgayPhanHoi.HasValue)
-                                {
-                                    <div class="text-muted" style="font-size:11px;margin-top:2px">@dg.NgayPhanHoi.Value.ToString("dd/MM/yyyy HH:mm")</div>
-                                }
+                                <span class="badge badge-sentiment-negative px-2.5 py-1 rounded-pill d-inline-flex align-items-center gap-1" style="font-size:11.5px">
+                                    <i class="bi bi-emoji-angry-fill"></i> Tiêu cực @(dg.DoTinCay.HasValue ? $"({Math.Round(dg.DoTinCay.Value * 100, 0)}%)" : "")
+                                </span>
+                            }
+                            else if (string.Equals(dg.NhanCamXuc, "positive", StringComparison.OrdinalIgnoreCase))
+                            {
+                                <span class="badge badge-sentiment-positive px-2.5 py-1 rounded-pill d-inline-flex align-items-center gap-1" style="font-size:11.5px">
+                                    <i class="bi bi-emoji-smile-fill"></i> Tích cực @(dg.DoTinCay.HasValue ? $"({Math.Round(dg.DoTinCay.Value * 100, 0)}%)" : "")
+                                </span>
+                            }
+                            else if (string.Equals(dg.NhanCamXuc, "normal", StringComparison.OrdinalIgnoreCase))
+                            {
+                                <span class="badge badge-sentiment-normal px-2.5 py-1 rounded-pill d-inline-flex align-items-center gap-1" style="font-size:11.5px">
+                                    <i class="bi bi-emoji-neutral"></i> Bình thường @(dg.DoTinCay.HasValue ? $"({Math.Round(dg.DoTinCay.Value * 100, 0)}%)" : "")
+                                </span>
                             }
                             else
                             {
-                                <span class="amp-pill amp-pill-red">Chờ phản hồi</span>
+                                <span class="badge bg-light text-secondary border px-2.5 py-1 rounded-pill" style="font-size:11px">
+                                    Chưa phân tích
+                                </span>
+                            }
+                        </td>
+                        <td>
+                            @* Trạng thái kiểm duyệt: ĐỎ - XANH - XÁM *@
+                            @if (dg.TrangThai == TrangThaiDanhGia.ChoDuyet)
+                            {
+                                <span class="badge badge-moderation-pending px-2.5 py-1 rounded-pill d-inline-flex align-items-center gap-1" style="font-size:11.5px">
+                                    <i class="bi bi-hourglass-split"></i> Chờ duyệt
+                                </span>
+                            }
+                            else if (dg.TrangThai == TrangThaiDanhGia.TuChoi)
+                            {
+                                <span class="badge badge-moderation-rejected px-2.5 py-1 rounded-pill d-inline-flex align-items-center gap-1" style="font-size:11.5px">
+                                    <i class="bi bi-x-circle-fill"></i> Đã từ chối
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge badge-moderation-approved px-2.5 py-1 rounded-pill d-inline-flex align-items-center gap-1" style="font-size:11.5px">
+                                    <i class="bi bi-check-circle-fill"></i> Đã duyệt
+                                </span>
+                            }
+                        </td>
+                        <td>
+                            @* Trạng thái phản hồi: XANH (đã phản hồi) - XÁM (chưa trả lời) *@
+                            @if (!string.IsNullOrEmpty(dg.PhanHoi))
+                            {
+                                <span class="badge badge-sentiment-positive px-2 py-1 rounded-pill d-inline-flex align-items-center gap-1" style="font-size:11px">
+                                    <i class="bi bi-check-circle-fill"></i>Đã phản hồi
+                                </span>
+                                <div style="font-size:11.5px;color:#374151;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="@dg.PhanHoi">
+                                    Shop: @dg.PhanHoi
+                                </div>
+                            }
+                            else
+                            {
+                                <span class="badge badge-sentiment-normal px-2 py-1 rounded-pill d-inline-flex align-items-center gap-1" style="font-size:11px">
+                                    <i class="bi bi-dash-circle"></i>Chưa trả lời
+                                </span>
                             }
                         </td>
                         <td style="font-size:12px;color:#6B7280;white-space:nowrap">
                             @dg.NgayDanhGia.ToString("dd/MM/yyyy")
                         </td>
-                        <td>
-                            <div class="d-flex align-items-center gap-2">
-                                <button type="button" class="btn btn-sm @(!string.IsNullOrEmpty(dg.PhanHoi) ? "btn-outline-dark" : "btn-dark") rounded-pill px-3 py-1 fw-semibold" 
-                                        style="font-size:12px" data-bs-toggle="modal" data-bs-target="#modalPhanHoi_@dg.Id">
-                                    <i class="bi @(!string.IsNullOrEmpty(dg.PhanHoi) ? "bi-pencil-square" : "bi-reply-fill")"></i> @(!string.IsNullOrEmpty(dg.PhanHoi) ? "Sửa phản hồi" : "Trả lời")
+                        <td style="white-space:nowrap">
+                            @* SẮP XẾP CỘT THAO TÁC GỌN GÀNG, ĐỒNG BỘ 1 HÀNG NGANG, 3 MÀU ĐỎ - XANH - XÁM *@
+                            <div class="d-inline-flex align-items-center gap-1.5">
+                                <!-- NÚT 1: CHI TIẾT (Màu Xám - Mở Overlay) -->
+                                <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-2.5 py-1 fw-semibold d-inline-flex align-items-center gap-1" 
+                                        style="font-size:11.5px" data-bs-toggle="modal" data-bs-target="#modalChiTiet_@dg.Id" title="Xem chi tiết & Kiểm duyệt (Overlay)">
+                                    <i class="bi bi-window-stack"></i>Chi tiết
                                 </button>
-                                
-                                <form asp-action="Xoa" method="post" onsubmit="return confirm('Bạn có chắc muốn xóa đánh giá này?');" class="d-inline">
-                                    @Html.AntiForgeryToken()
-                                    <input type="hidden" name="id" value="@dg.Id" />
-                                    <button type="submit" class="amp-action-link danger border-0" style="cursor:pointer">
-                                        <i class="bi bi-trash"></i>
+
+                                <!-- NÚT 2 & 3: HÀNH ĐỘNG DUYỆT (XANH) HOẶC TỪ CHỐI / ẨN (ĐỎ) -->
+                                @if (dg.TrangThai == TrangThaiDanhGia.ChoDuyet)
+                                {
+                                    <form asp-action="Duyet" method="post" class="d-inline m-0">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@dg.Id" />
+                                        <button type="submit" class="btn btn-sm btn-success rounded-pill px-2.5 py-1 fw-semibold d-inline-flex align-items-center gap-1" style="font-size:11.5px" title="Phê duyệt hiển thị">
+                                            <i class="bi bi-check-lg"></i>Duyệt
+                                        </button>
+                                    </form>
+
+                                    <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-2.5 py-1 fw-semibold d-inline-flex align-items-center gap-1" style="font-size:11.5px" 
+                                            data-bs-toggle="modal" data-bs-target="#modalTuChoi_@dg.Id" title="Từ chối hiển thị">
+                                        <i class="bi bi-x-lg"></i>Từ chối
                                     </button>
-                                </form>
+                                }
+                                else if (dg.TrangThai == TrangThaiDanhGia.TuChoi)
+                                {
+                                    <form asp-action="Duyet" method="post" class="d-inline m-0">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@dg.Id" />
+                                        <button type="submit" class="btn btn-sm btn-outline-success rounded-pill px-2.5 py-1 fw-semibold d-inline-flex align-items-center gap-1" style="font-size:11.5px" title="Khôi phục &amp; Duyệt lại">
+                                            <i class="bi bi-arrow-counterclockwise"></i>Duyệt lại
+                                        </button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-2.5 py-1 fw-semibold d-inline-flex align-items-center gap-1" style="font-size:11.5px" 
+                                            data-bs-toggle="modal" data-bs-target="#modalTuChoi_@dg.Id" title="Ẩn đánh giá khỏi website">
+                                        <i class="bi bi-eye-slash"></i>Ẩn
+                                    </button>
+                                }
+
+                                <!-- NÚT 4: DROPDOWN THAO TÁC PHỤ (Màu Xám - Gọn gàng, không rớt dòng) -->
+                                <div class="dropdown d-inline">
+                                    <button class="btn btn-sm btn-light border rounded-circle d-inline-flex align-items-center justify-content-center" 
+                                            type="button" data-bs-toggle="dropdown" aria-expanded="false" 
+                                            style="width:28px;height:28px;padding:0;color:#6b7280" title="Thao tác khác">
+                                        <i class="bi bi-three-dots-vertical"></i>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 py-1" style="font-size:12.5px;min-width:170px">
+                                        <li>
+                                            <button type="button" class="dropdown-item d-flex align-items-center gap-2 py-1.5" data-bs-toggle="modal" data-bs-target="#modalPhanHoi_@dg.Id">
+                                                <i class="bi bi-reply text-secondary"></i>@(string.IsNullOrEmpty(dg.PhanHoi) ? "Trả lời phản hồi" : "Sửa phản hồi")
+                                            </button>
+                                        </li>
+                                        <li>
+                                            <form asp-action="PhanTichLai" method="post" class="m-0">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@dg.Id" />
+                                                <button type="submit" class="dropdown-item d-flex align-items-center gap-2 py-1.5">
+                                                    <i class="bi bi-cpu text-secondary"></i>Phân tích lại AI
+                                                </button>
+                                            </form>
+                                        </li>
+                                        <li><hr class="dropdown-divider my-1"></li>
+                                        <li>
+                                            <form asp-action="Xoa" method="post" onsubmit="return confirm('Bạn có chắc muốn xóa vĩnh viễn đánh giá này?');" class="m-0">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@dg.Id" />
+                                                <button type="submit" class="dropdown-item d-flex align-items-center gap-2 py-1.5 text-danger">
+                                                    <i class="bi bi-trash text-danger"></i>Xóa vĩnh viễn
+                                                </button>
+                                            </form>
+                                        </li>
+                                    </ul>
+                                </div>
                             </div>
 
-                            <!-- Modal Phản Hồi Đánh Giá -->
+                            <!-- MODAL TỪ CHỐI ĐÁNH GIÁ (POPUP NHANH) -->
+                            <div class="modal fade" id="modalTuChoi_@dg.Id" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content border-0 shadow">
+                                        <form asp-action="TuChoi" method="post">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@dg.Id" />
+                                            <div class="modal-header bg-danger bg-opacity-10">
+                                                <h6 class="modal-title fw-bold text-danger"><i class="bi bi-shield-x me-1"></i>Từ chối phê duyệt đánh giá</h6>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body py-3">
+                                                <div class="p-3 rounded bg-light mb-3" style="font-size:13px">
+                                                    <div class="fw-bold mb-1">Khách hàng: @(dg.NguoiDung?.HoTen ?? "Khách hàng")</div>
+                                                    <div class="text-secondary fst-italic">"@dg.NoiDung"</div>
+                                                </div>
+                                                <label class="form-label fw-bold" style="font-size:13px">Lý do từ chối (sẽ thông báo đến khách hàng):</label>
+                                                <textarea name="lyDoTuChoi" rows="3" class="form-control" placeholder="Nhập lý do từ chối (vd: Nội dung vi phạm quy chuẩn cộng đồng, từ ngữ quá tiêu cực hoặc xúc phạm)...">Nội dung quá tiêu cực hoặc không phù hợp với chuẩn mực đánh giá sản phẩm.</textarea>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-sm btn-light rounded-pill px-3" data-bs-dismiss="modal">Đóng</button>
+                                                <button type="submit" class="btn btn-sm btn-danger rounded-pill px-3 fw-semibold">Xác nhận từ chối</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- MODAL PHẢN HỒI ĐÁNH GIÁ -->
                             <div class="modal fade" id="modalPhanHoi_@dg.Id" tabindex="-1" aria-hidden="true">
                                 <div class="modal-dialog modal-dialog-centered">
                                     <div class="modal-content border-0 shadow">
@@ -154,7 +481,7 @@
                                             <input type="hidden" name="id" value="@dg.Id" />
                                             <div class="modal-header">
                                                 <h6 class="modal-title fw-bold">Trả lời đánh giá của @(dg.NguoiDung?.HoTen ?? "Khách hàng")</h6>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                             </div>
                                             <div class="modal-body py-3">
                                                 <div class="p-3 rounded bg-light mb-3" style="font-size:13px">
@@ -162,13 +489,313 @@
                                                     <div class="text-secondary fst-italic">"@dg.NoiDung"</div>
                                                 </div>
                                                 <label class="form-label fw-bold" style="font-size:13px">Nội dung phản hồi từ thương hiệu AMP:</label>
-                                                <textarea name="noiDungPhanHoi" rows="4" class="form-control" placeholder="Cảm ơn bạn đã phản hồi. AMP chân thành xin lỗi..." required>@dg.PhanHoi</textarea>
+                                                <textarea name="noiDungPhanHoi" rows="4" class="form-control" placeholder="Cảm ơn bạn đã phản hồi. AMP chân thành cảm ơn / xin lỗi..." required>@dg.PhanHoi</textarea>
                                             </div>
                                             <div class="modal-footer">
-                                                <button type="button" class="btn btn-sm btn-light" data-bs-dismiss="modal">Đóng</button>
-                                                <button type="submit" class="amp-btn-dark-pill" style="padding:7px 18px">Gửi phản hồi</button>
+                                                <button type="button" class="btn btn-sm btn-light rounded-pill px-3" data-bs-dismiss="modal">Đóng</button>
+                                                <button type="submit" class="btn btn-sm btn-dark rounded-pill px-3 fw-semibold">Gửi phản hồi</button>
                                             </div>
                                         </form>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- =================================================================== -->
+                            <!-- OVERLAY CHI TIẾT BÌNH LUẬN & KIỂM DUYỆT AI (MODAL OVERLAY - KHÔNG PHẢI TRANG MỚI) -->
+                            <!-- =================================================================== -->
+                            <div class="modal fade" id="modalChiTiet_@dg.Id" tabindex="-1" aria-labelledby="modalChiTietLabel_@dg.Id" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+                                    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                                        <!-- OVERLAY HEADER -->
+                                        <div class="modal-header border-0 bg-dark text-white px-4 py-3 d-flex align-items-center justify-content-between">
+                                            <div class="d-flex align-items-center gap-2">
+                                                <div class="rounded-circle bg-secondary bg-opacity-25 text-white d-flex align-items-center justify-content-center" style="width:38px;height:38px">
+                                                    <i class="bi bi-shield-check fs-5"></i>
+                                                </div>
+                                                <div>
+                                                    <h6 class="modal-title fw-bold text-white mb-0" id="modalChiTietLabel_@dg.Id">
+                                                        Chi tiết Đánh giá &amp; Kiểm duyệt AI
+                                                    </h6>
+                                                    <span class="text-white-50" style="font-size:11.5px">Mã đánh giá: #@dg.Id • Gửi ngày @dg.NgayDanhGia.ToString("dd/MM/yyyy HH:mm")</span>
+                                                </div>
+                                            </div>
+                                            <div class="d-flex align-items-center gap-2">
+                                                @if (dg.TrangThai == TrangThaiDanhGia.ChoDuyet)
+                                                {
+                                                    <span class="badge bg-secondary text-white px-2.5 py-1.5 rounded-pill fw-semibold" style="font-size:12px">
+                                                        <i class="bi bi-hourglass-split me-1"></i>Chờ duyệt
+                                                    </span>
+                                                }
+                                                else if (dg.TrangThai == TrangThaiDanhGia.DaDuyet)
+                                                {
+                                                    <span class="badge bg-success text-white px-2.5 py-1.5 rounded-pill fw-semibold" style="font-size:12px">
+                                                        <i class="bi bi-check-circle-fill me-1"></i>Đã duyệt hiển thị
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-danger text-white px-2.5 py-1.5 rounded-pill fw-semibold" style="font-size:12px">
+                                                        <i class="bi bi-x-circle-fill me-1"></i>Đã từ chối (Ẩn)
+                                                    </span>
+                                                }
+                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                                            </div>
+                                        </div>
+
+                                        <!-- OVERLAY BODY -->
+                                        <div class="modal-body p-4 bg-light">
+                                            <div class="d-flex flex-column gap-3">
+
+                                                <!-- 1. SẢN PHẨM ĐƯỢC ĐÁNH GIÁ (KÈM LINK TỚI SẢN PHẨM) -->
+                                                <div class="card border-0 shadow-sm rounded-3">
+                                                    <div class="card-body p-3">
+                                                        <div class="d-flex align-items-center justify-content-between mb-2">
+                                                            <span class="text-uppercase fw-bold text-secondary" style="font-size:11.5px;letter-spacing:0.04em">
+                                                                <i class="bi bi-bag-check me-1 text-secondary"></i>Sản phẩm được đánh giá
+                                                            </span>
+                                                            <a href="/SanPham/ChiTiet/@dg.SanPhamId" target="_blank" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 fw-semibold d-inline-flex align-items-center gap-1 shadow-xs" style="font-size:12px">
+                                                                <i class="bi bi-box-arrow-up-right"></i>Xem trang sản phẩm
+                                                            </a>
+                                                        </div>
+                                                        <div class="d-flex align-items-center gap-3">
+                                                            @{
+                                                                var anhSp = !string.IsNullOrEmpty(dg.SanPham?.HinhAnhChinh) ? dg.SanPham.HinhAnhChinh : "/images/placeholder.png";
+                                                            }
+                                                            <img src="@anhSp" alt="@(dg.SanPham?.TenSanPham)" class="rounded-3 border object-fit-cover shadow-xs" style="width:72px;height:72px;flex-shrink:0" onerror="this.src='/images/placeholder.png'" />
+                                                            <div class="flex-grow-1">
+                                                                <h6 class="fw-bold text-dark mb-1" style="font-size:15px">
+                                                                    <a href="/SanPham/ChiTiet/@dg.SanPhamId" target="_blank" class="text-dark text-decoration-none">
+                                                                        @(dg.SanPham?.TenSanPham ?? "Sản phẩm")
+                                                                    </a>
+                                                                </h6>
+                                                                <div class="d-flex align-items-center gap-3 flex-wrap text-muted" style="font-size:12.5px">
+                                                                    @if (dg.SanPham?.DanhMuc != null)
+                                                                    {
+                                                                        <span><i class="bi bi-folder2-open me-1"></i>@(dg.SanPham.DanhMuc.TenDanhMuc)</span>
+                                                                    }
+                                                                    @if (!string.IsNullOrEmpty(dg.SanPham?.ThuongHieu))
+                                                                    {
+                                                                        <span><i class="bi bi-tag me-1"></i>@(dg.SanPham.ThuongHieu)</span>
+                                                                    }
+                                                                    @if (dg.SanPham != null)
+                                                                    {
+                                                                        <span class="text-dark fw-bold">
+                                                                            @(dg.SanPham.GiaKhuyenMai.HasValue ? dg.SanPham.GiaKhuyenMai.Value.ToString("N0") + "₫" : dg.SanPham.GiaGoc.ToString("N0") + "₫")
+                                                                        </span>
+                                                                    }
+                                                                    @if (dg.DonHang != null)
+                                                                    {
+                                                                        <span class="badge bg-light text-secondary border">Mã đơn: #@dg.DonHang.MaDonHang</span>
+                                                                    }
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- 2. NỘI DUNG BÌNH LUẬN CỦA KHÁCH HÀNG -->
+                                                <div class="card border-0 shadow-sm rounded-3">
+                                                    <div class="card-body p-3">
+                                                        <span class="text-uppercase fw-bold text-secondary d-block mb-2" style="font-size:11.5px;letter-spacing:0.04em">
+                                                            <i class="bi bi-chat-left-text me-1 text-secondary"></i>Nội dung bình luận từ khách hàng
+                                                        </span>
+
+                                                        <!-- Customer Info Row -->
+                                                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3 pb-2 border-bottom">
+                                                            <div class="d-flex align-items-center gap-2">
+                                                                <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold bg-dark text-white" style="width:38px;height:38px;font-size:14px">
+                                                                    @initial
+                                                                </div>
+                                                                <div>
+                                                                    <div class="fw-bold text-dark" style="font-size:14px">@(dg.NguoiDung?.HoTen ?? "Khách hàng ẩn danh")</div>
+                                                                    <div class="text-muted" style="font-size:12px">
+                                                                        @(dg.NguoiDung?.Email ?? "Không có email") @(!string.IsNullOrEmpty(dg.NguoiDung?.SoDienThoai) ? $"• {dg.NguoiDung.SoDienThoai}" : "")
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="text-end">
+                                                                <div class="d-flex align-items-center gap-1 mb-1 justify-content-end">
+                                                                    @for (int i = 1; i <= 5; i++)
+                                                                    {
+                                                                        if (i <= dg.SoSao)
+                                                                        {
+                                                                            <i class="bi bi-star-fill text-warning fs-6"></i>
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            <i class="bi bi-star-fill text-muted opacity-25 fs-6"></i>
+                                                                        }
+                                                                    }
+                                                                    <span class="fw-bold text-dark ms-1" style="font-size:13.5px">(@dg.SoSao / 5 sao)</span>
+                                                                </div>
+                                                                <div class="text-muted" style="font-size:11.5px">@dg.NgayDanhGia.ToString("dd/MM/yyyy HH:mm:ss")</div>
+                                                            </div>
+                                                        </div>
+
+                                                        <!-- Review Text Quote Container -->
+                                                        <div class="review-quote-container mb-2">
+                                                            <div class="text-muted small mb-1"><i class="bi bi-quote fs-4 text-secondary opacity-50 me-1"></i>Nội dung đánh giá:</div>
+                                                            <div class="fw-normal text-dark px-1" style="font-size:14.5px;line-height:1.6;white-space:pre-wrap">@dg.NoiDung</div>
+                                                        </div>
+
+                                                        @if (dg.TrangThai == TrangThaiDanhGia.TuChoi && !string.IsNullOrEmpty(dg.LyDoTuChoi))
+                                                        {
+                                                            <div class="alert alert-danger border-0 rounded-3 py-2 px-3 mb-2 d-flex align-items-start gap-2" style="font-size:12.5px">
+                                                                <i class="bi bi-shield-x fs-5 flex-shrink-0 text-danger"></i>
+                                                                <div>
+                                                                    <strong class="d-block text-danger">Đánh giá bị từ chối:</strong>
+                                                                    <span>@dg.LyDoTuChoi</span>
+                                                                </div>
+                                                            </div>
+                                                        }
+
+                                                        @if (!string.IsNullOrEmpty(dg.PhanHoi))
+                                                        {
+                                                            <div class="p-3 rounded-3 bg-success bg-opacity-10 border border-success-subtle mt-2">
+                                                                <div class="d-flex align-items-center justify-content-between mb-1">
+                                                                    <span class="fw-bold text-success" style="font-size:12.5px"><i class="bi bi-reply-fill me-1"></i>Phản hồi từ Thương hiệu AMP</span>
+                                                                    <span class="text-muted" style="font-size:11.5px">@(dg.NgayPhanHoi.HasValue ? dg.NgayPhanHoi.Value.ToString("dd/MM/yyyy HH:mm") : "")</span>
+                                                                </div>
+                                                                <div class="text-dark" style="font-size:13px;line-height:1.5">@dg.PhanHoi</div>
+                                                            </div>
+                                                        }
+                                                    </div>
+                                                </div>
+
+                                                <!-- 3. THỐNG KÊ CHI TIẾT THÔNG TIN PHÂN LOẠI AI PHOBERT -->
+                                                <div class="card border-0 shadow-sm rounded-3">
+                                                    <div class="card-body p-3">
+                                                        <span class="text-uppercase fw-bold text-secondary d-block mb-3" style="font-size:11.5px;letter-spacing:0.04em">
+                                                            <i class="bi bi-cpu-fill me-1 text-secondary"></i>Thống kê chi tiết phân loại AI (PhoBERT)
+                                                        </span>
+
+                                                        <div class="row g-2 mb-3">
+                                                            <!-- Stat 1: Nhãn Cảm xúc -->
+                                                            <div class="col-sm-4">
+                                                                <div class="p-3 rounded-3 h-100 border text-center @(dg.NhanCamXuc == "negative" || dg.BiCanhBaoTieuCuc ? "bg-danger bg-opacity-10 border-danger-subtle" : (dg.NhanCamXuc == "positive" ? "bg-success bg-opacity-10 border-success-subtle" : "bg-light border-light-subtle"))">
+                                                                    <div class="text-muted small fw-semibold mb-1">Phân loại cảm xúc</div>
+                                                                    @if (dg.NhanCamXuc == "negative" || dg.BiCanhBaoTieuCuc)
+                                                                    {
+                                                                        <div class="fs-5 fw-bold text-danger d-flex align-items-center justify-content-center gap-1">
+                                                                            <i class="bi bi-emoji-angry-fill"></i> Tiêu cực
+                                                                        </div>
+                                                                        <span class="badge bg-danger rounded-pill mt-1" style="font-size:10px">Negative Sentiment</span>
+                                                                    }
+                                                                    else if (dg.NhanCamXuc == "positive")
+                                                                    {
+                                                                        <div class="fs-5 fw-bold text-success d-flex align-items-center justify-content-center gap-1">
+                                                                            <i class="bi bi-emoji-smile-fill"></i> Tích cực
+                                                                        </div>
+                                                                        <span class="badge bg-success rounded-pill mt-1" style="font-size:10px">Positive Sentiment</span>
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        <div class="fs-5 fw-bold text-secondary d-flex align-items-center justify-content-center gap-1">
+                                                                            <i class="bi bi-emoji-neutral-fill"></i> Bình thường
+                                                                        </div>
+                                                                        <span class="badge bg-secondary rounded-pill mt-1" style="font-size:10px">Normal / Neutral</span>
+                                                                    }
+                                                                </div>
+                                                            </div>
+
+                                                            <!-- Stat 2: Độ tin cậy AI -->
+                                                            <div class="col-sm-4">
+                                                                <div class="p-3 rounded-3 h-100 border bg-white text-center">
+                                                                    <div class="text-muted small fw-semibold mb-1">Độ tin cậy mô hình</div>
+                                                                    @{
+                                                                        double confPct = dg.DoTinCay.HasValue ? Math.Round(dg.DoTinCay.Value * 100, 1) : (dg.NhanCamXuc != null ? 85.0 : 0);
+                                                                        string confColor = confPct >= 80 ? "bg-success" : (confPct >= 60 ? "bg-secondary" : "bg-danger");
+                                                                    }
+                                                                    <div class="fs-5 fw-bold text-dark">@(confPct > 0 ? $"{confPct}%" : "Chưa có")</div>
+                                                                    <div class="progress mt-2" style="height:6px">
+                                                                        <div class="progress-bar @confColor" role="progressbar" style="width: @(confPct)%"></div>
+                                                                    </div>
+                                                                    <span class="text-muted d-block mt-1" style="font-size:11px">Confidence Score</span>
+                                                                </div>
+                                                            </div>
+
+                                                            <!-- Stat 3: Cảnh báo & Rủi ro -->
+                                                            <div class="col-sm-4">
+                                                                <div class="p-3 rounded-3 h-100 border bg-white text-center">
+                                                                    <div class="text-muted small fw-semibold mb-1">Cảnh báo kiểm duyệt</div>
+                                                                    @if (dg.BiCanhBaoTieuCuc)
+                                                                    {
+                                                                        <div class="fs-6 fw-bold text-danger d-flex align-items-center justify-content-center gap-1">
+                                                                            <i class="bi bi-exclamation-triangle-fill"></i> Bị gắn cờ
+                                                                        </div>
+                                                                        <span class="badge bg-danger text-white rounded-pill mt-1" style="font-size:10px">Cần kiểm duyệt ngay</span>
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        <div class="fs-6 fw-bold text-success d-flex align-items-center justify-content-center gap-1">
+                                                                            <i class="bi bi-check-circle-fill"></i> Đạt chuẩn
+                                                                        </div>
+                                                                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill mt-1" style="font-size:10px">Không vi phạm</span>
+                                                                    }
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="p-2.5 rounded-2 bg-light d-flex align-items-center justify-content-between text-muted flex-wrap gap-2" style="font-size:12px">
+                                                            <div><i class="bi bi-info-circle me-1"></i>Mô hình xử lý: <strong>PhoBERT (Pretrained on Vietnamese E-commerce)</strong></div>
+                                                            <div>Cập nhật lần cuối: @(dg.NgayDuyet.HasValue ? dg.NgayDuyet.Value.ToString("dd/MM/yyyy HH:mm") : dg.NgayDanhGia.ToString("dd/MM/yyyy HH:mm"))</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- 4. KHU VỰC TỪ CHỐI NHANH (COLLAPSIBLE / FORM LÝ DO) -->
+                                                <div class="collapse" id="collapseTuChoi_@dg.Id">
+                                                    <div class="card border border-danger-subtle shadow-sm rounded-3 bg-danger bg-opacity-10">
+                                                        <div class="card-body p-3">
+                                                            <form asp-action="TuChoi" method="post">
+                                                                @Html.AntiForgeryToken()
+                                                                <input type="hidden" name="id" value="@dg.Id" />
+                                                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                                                    <h6 class="fw-bold text-danger mb-0"><i class="bi bi-shield-x me-1"></i>Lý do từ chối đánh giá:</h6>
+                                                                    <button type="button" class="btn btn-sm btn-link text-muted p-0 text-decoration-none" data-bs-toggle="collapse" data-bs-target="#collapseTuChoi_@dg.Id"><i class="bi bi-x-lg"></i> Hủy</button>
+                                                                </div>
+                                                                <div class="mb-2">
+                                                                    <textarea name="lyDoTuChoi" rows="2" class="form-control" placeholder="Nhập lý do từ chối (sẽ thông báo đến khách hàng)...">Nội dung bình luận mang tính tiêu cực hoặc không phù hợp với chuẩn mực đánh giá sản phẩm.</textarea>
+                                                                </div>
+                                                                <div class="d-flex justify-content-end gap-2">
+                                                                    <button type="button" class="btn btn-sm btn-light rounded-pill px-3" data-bs-toggle="collapse" data-bs-target="#collapseTuChoi_@dg.Id">Hủy bỏ</button>
+                                                                    <button type="submit" class="btn btn-sm btn-danger rounded-pill px-4 fw-bold shadow-sm">
+                                                                        <i class="bi bi-x-circle me-1"></i>Xác nhận từ chối
+                                                                    </button>
+                                                                </div>
+                                                            </form>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                        </div>
+
+                                        <!-- OVERLAY FOOTER VỚI 2 BUTTON: DUYỆT VÀ TỪ CHỐI (THEO ĐÚNG YÊU CẦU) -->
+                                        <div class="modal-footer bg-white border-top px-4 py-3 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                                            <button type="button" class="btn btn-light rounded-pill px-3 py-2 fw-medium text-secondary" data-bs-dismiss="modal">
+                                                <i class="bi bi-arrow-left me-1"></i>Đóng
+                                            </button>
+
+                                            <div class="d-flex align-items-center gap-2">
+                                                <!-- BUTTON 1: TỪ CHỐI BÌNH LUẬN -->
+                                                <button type="button" class="btn btn-outline-danger rounded-pill px-3 py-2 fw-bold d-inline-flex align-items-center gap-1.5 shadow-sm"
+                                                        data-bs-toggle="collapse" data-bs-target="#collapseTuChoi_@dg.Id" title="Từ chối hoặc ẩn đánh giá">
+                                                    <i class="bi bi-x-circle-fill"></i>Từ chối bình luận
+                                                </button>
+
+                                                <!-- BUTTON 2: DUYỆT BÌNH LUẬN -->
+                                                <form asp-action="Duyet" method="post" class="d-inline m-0">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="id" value="@dg.Id" />
+                                                    <button type="submit" class="btn btn-success rounded-pill px-4 py-2 fw-bold d-inline-flex align-items-center gap-1.5 shadow-sm"
+                                                            title="Phê duyệt hiển thị công khai trên website" @(dg.TrangThai == TrangThaiDanhGia.DaDuyet ? "disabled" : "")>
+                                                        <i class="bi bi-check-circle-fill"></i>
+                                                        @(dg.TrangThai == TrangThaiDanhGia.DaDuyet ? "Đã duyệt hiển thị" : "Duyệt bình luận")
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -179,7 +806,12 @@
         </table>
     </div>
 
-    <div class="amp-pagination-wrap">
-        <div>Hiển thị <strong>@Model.Count</strong> của <strong>@tongDanhGia</strong> đánh giá</div>
+    <div class="amp-pagination-wrap d-flex justify-content-between align-items-center py-3 px-3 border-top">
+        <div style="font-size:13px;color:#6b7280">
+            Hiển thị <strong>@Model.Count</strong> trong tổng số <strong>@tongDanhGia</strong> đánh giá
+        </div>
+        <div class="small text-muted">
+            <i class="bi bi-info-circle me-1"></i>Hệ thống tự động đồng bộ kết quả phân tích cảm xúc từ mô hình PhoBERT-AMP.
+        </div>
     </div>
 </div>
